@@ -22,7 +22,9 @@ class DB {
           CREATE TABLE usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT,
-            email TEXT
+            email TEXT,
+            codigo INTEGER,
+            senha TEXT
           );
         ''');
       },

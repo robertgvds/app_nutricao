@@ -21,15 +21,15 @@ class MyApp extends StatelessWidget {
             onPressed: () async {
               // inserir um usuário
               await repo.inserir(
-                Usuario(nome: "Yuri", email: "teste@gmail.com"),
+                Usuario(nome: "Yuri", email: "teste@gmail.com", senha: ''),
               );
 
               // listar usuários
               final lista = await repo.listar();
               print("Usuários cadastrados:");
-              lista.forEach((u) {
+              for (var u in lista) {
                 print("${u.id} - ${u.nome} - ${u.email}");
-              });
+              }
             },
             child: const Text("Executar teste"),
           ),
