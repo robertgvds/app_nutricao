@@ -9,7 +9,8 @@ class Nutricionista extends Usuario {
     required String email,
     required String senha,
     required this.crn,
-  }) : super(id: id, nome: nome, email: email, senha: senha);
+    required String codigo,
+  }) : super(id: id, nome: nome, email: email, senha: senha, codigo: codigo);
 
   factory Nutricionista.fromMap(Map<String, dynamic> map) {
     return Nutricionista(
@@ -18,6 +19,7 @@ class Nutricionista extends Usuario {
       email: map['email'],
       senha: map['senha'],
       crn: map['crn'],
+      codigo: map['codigo'],
     );
   }
 }

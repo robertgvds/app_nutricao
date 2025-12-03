@@ -17,14 +17,39 @@ class DB {
     return await openDatabase(
       path,
       version: 1,
-      onCreate: (db, version) {
-        db.execute('''
+      onCreate: (db, version) async {
+        // Tabela base de usuários
+        await db.execute('''
           CREATE TABLE usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT,
             email TEXT,
-            codigo INTEGER,
-            senha TEXT
+            senha TEXT,
+						codigo TEXT
+          );
+        ''');
+
+        // Tabela de pacientes
+        await db.execute('''
+          CREATE TABLE pacientes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT,
+            email TEXT,
+            senha TEXT,
+            codigo TEXT,
+						refeicoes TEXT
+          );
+        ''');
+
+        // Tabela de nutricionistas
+        await db.execute('''
+          CREATE TABLE nutricionistas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT,
+            email TEXT,
+            senha TEXT,
+            crn TEXT
+            codigo TEXT,
           );
         ''');
       },

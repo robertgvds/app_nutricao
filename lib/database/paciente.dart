@@ -1,15 +1,16 @@
 import 'usuario.dart';
 
 class Paciente extends Usuario {
-  String codigo;
+  List<String> refeicoes;
 
   Paciente({
     int? id,
     required String nome,
     required String email,
     required String senha,
-    required this.codigo,
-  }) : super(id: id, nome: nome, email: email, senha: senha);
+    required String codigo,
+    this.refeicoes = const [],
+  }) : super(id: id, nome: nome, email: email, senha: senha, codigo: codigo);
 
   factory Paciente.fromMap(Map<String, dynamic> map) {
     return Paciente(
@@ -18,6 +19,7 @@ class Paciente extends Usuario {
       email: map['email'],
       senha: map['senha'],
       codigo: map['codigo'],
+      refeicoes: List<String>.from(map['refeicoes'] ?? []),
     );
   }
 }
