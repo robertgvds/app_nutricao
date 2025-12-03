@@ -46,4 +46,10 @@ class PacienteRepository {
     final db = await DB.get();
     return await db.delete('pacientes', where: 'id = ?', whereArgs: [id]);
   }
+
+  // Limpar tabela
+  Future<void> limparTabela() async {
+    final db = await DB.get();
+    await db.delete('pacientes');
+  }
 }

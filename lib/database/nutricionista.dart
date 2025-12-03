@@ -15,11 +15,18 @@ class Nutricionista extends Usuario {
   factory Nutricionista.fromMap(Map<String, dynamic> map) {
     return Nutricionista(
       id: map['id'],
-      nome: map['nome'],
-      email: map['email'],
-      senha: map['senha'],
-      crn: map['crn'],
-      codigo: map['codigo'],
+      nome: map['nome'] ?? '',
+      email: map['email'] ?? '',
+      senha: map['senha'] ?? '',
+      crn: map['crn'] ?? '',
+      codigo: map['codigo'] ?? '',
     );
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    final map = super.toMap();
+    map['crn'] = crn;
+    return map;
   }
 }

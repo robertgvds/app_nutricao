@@ -48,8 +48,8 @@ class DB {
             nome TEXT,
             email TEXT,
             senha TEXT,
-            crn TEXT
-            codigo TEXT,
+            crn TEXT,
+            codigo TEXT
           );
         ''');
       },
