@@ -1,133 +1,61 @@
+// arquivo: main.dart
+
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'database/usuario_repository.dart';
-import 'database/usuario.dart';
-import 'database/paciente.dart';
-import 'database/paciente_repository.dart';
-import 'database/nutricionista.dart';
-import 'database/nutricionista_repository.dart';
+import 'teste_db.dart'; // Importe a nova tela de teste
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  final repoUsuario = UsuarioRepository();
-  final repoPaciente = PacienteRepository();
-  final repoNutricionista = NutricionistaRepository();
+// ----------------------------------------------------
+// 1. Tela Principal (Home)
+// ----------------------------------------------------
 
-  MyApp({super.key});
-
-  Future<void> apagarBanco() async {
-    final path = join(await getDatabasesPath(), 'meu_banco.db');
-    await deleteDatabase(path);
-    print("✅ BANCO APAGADO!");
-  }
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text("Teste SQLite")),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  await repoUsuario.limparTabela();
-                  await repoPaciente.limparTabela();
-                  await repoNutricionista.limparTabela();
-                  print("✅ Todas as tabelas foram limpas!");
-                },
-                child: const Text("Limpar Tabelas"),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  try {
-                    print("\n========== INSERINDO DADOS ==========");
+    return Scaffold(
+      appBar: AppBar(title: const Text("Tela Principal")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Bem-vindo ao App!", style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 30),
 
-                    await repoUsuario.inserir(
-                      Usuario(
-                        nome: "Yuri",
-                        email: "teste@gmail.com",
-                        senha: 'testesenha1',
-                        codigo: '12345',
-                      ),
-                    );
-                    print("✅ Usuário inserido");
-
-                    await repoPaciente.inserir(
-                      Paciente(
-                        nome: "Ana",
-                        email: 'teste2@email.com',
-                        senha: 'testesenha2',
-                        codigo: '54321',
-                        refeicoes: ['Café', 'Almoço', 'Jantar'],
-                      ),
-                    );
-                    print("✅ Paciente inserido");
-
-                    await repoNutricionista.inserir(
-                      Nutricionista(
-                        nome: "Carlos",
-                        email: 'carlos@nutri.com',
-                        senha: 'testesenha3',
-                        codigo: '678901',
-                        crn: 'CRN1234',
-                      ),
-                    );
-                    print("✅ Nutricionista inserido");
-
-                    print("\n========== LISTANDO USUÁRIOS ==========");
-                    final usuarios = await repoUsuario.listar();
-                    for (var u in usuarios) {
-                      print(
-                        "ID: ${u.id} | Nome: ${u.nome} | Email: ${u.email} | Código: ${u.codigo}",
-                      );
-                    }
-
-                    print("\n========== LISTANDO PACIENTES ==========");
-                    final pacientes = await repoPaciente.listar();
-                    for (var p in pacientes) {
-                      print(
-                        "ID: ${p.id} | Nome: ${p.nome} | Email: ${p.email} | Refeições: ${p.refeicoes} | Código: ${p.codigo}",
-                      );
-                    }
-
-                    print("\n========== LISTANDO NUTRICIONISTAS ==========");
-                    final nutri = await repoNutricionista.listar();
-                    for (var n in nutri) {
-                      print(
-                        "ID: ${n.id} | Nome: ${n.nome} | Email: ${n.email} | CRN: ${n.crn} | Código: ${n.codigo}",
-                      );
-                    }
-
-                    print("\n========== TESTE DE BUSCA ==========");
-                    final paciente1 = await repoPaciente.buscarPorId(1);
-                    if (paciente1 != null) {
-                      print("✅ Paciente encontrado: ${paciente1.nome}");
-                    }
-
-                    final nutri1 = await repoNutricionista.buscarPorId(1);
-                    if (nutri1 != null) {
-                      print("✅ Nutricionista encontrado: ${nutri1.nome}");
-                    }
-
-                    print("\n========== TODOS OS TESTES CONCLUÍDOS ==========");
-                  } catch (e) {
-                    print("❌ ERRO: $e");
-                  }
-                },
-                child: const Text("Executar Teste Completo"),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            // Botão que fará o redirecionamento
+            ElevatedButton(
+              onPressed: () {
+                // MÉTODO DE REDIRECIONAMENTO DE TELA
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TesteDb()),
+                );
+              },
+              child: const Text("Ir para Tela de Teste de BD"),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+// ----------------------------------------------------
+// 2. Widget Raiz (MyApp)
+// ----------------------------------------------------
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      // Define a tela principal como HomePage
+      home: HomePage(),
     );
   }
 }

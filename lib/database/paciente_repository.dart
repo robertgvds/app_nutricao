@@ -1,5 +1,5 @@
 import 'db.dart';
-import 'paciente.dart';
+import '../classes/paciente.dart';
 
 class PacienteRepository {
   // Inserir novo paciente

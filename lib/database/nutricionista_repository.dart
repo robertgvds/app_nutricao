@@ -1,5 +1,5 @@
 import 'db.dart';
-import 'nutricionista.dart';
+import '../classes/nutricionista.dart';
 
 class NutricionistaRepository {
   // Inserir novo nutricionista

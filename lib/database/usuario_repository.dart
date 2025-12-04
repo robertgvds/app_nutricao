@@ -1,5 +1,5 @@
 import 'db.dart';
-import 'usuario.dart';
+import '../classes/usuario.dart';
 
 class UsuarioRepository {
   Future<int> inserir(Usuario usuario) async {
