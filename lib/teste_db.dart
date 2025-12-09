@@ -4,9 +4,9 @@ import 'package:path/path.dart';
 import 'database/usuario_repository.dart';
 import 'database/paciente_repository.dart';
 import 'database/nutricionista_repository.dart';
-import '/classes/usuario.dart';
-import '/classes/paciente.dart';
-import '/classes/nutricionista.dart';
+import 'formularioUsuario.dart';
+import 'formularioNutricionista.dart';
+import 'formularioPaciente.dart';
 
 class TesteDb extends StatelessWidget {
   final repoUsuario = UsuarioRepository();
@@ -41,94 +41,118 @@ class TesteDb extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    print("\n========== INSERINDO DADOS ==========");
-
-                    await repoUsuario.inserir(
-                      Usuario(
-                        nome: "Yuri",
-                        email: "teste@gmail.com",
-                        senha: 'testesenha1',
-                        codigo: '12345',
-                      ),
-                    );
-                    print("✅ Usuário inserido");
-
-                    await repoPaciente.inserir(
-                      Paciente(
-                        nome: "Ana",
-                        email: 'teste2@email.com',
-                        senha: 'testesenha2',
-                        codigo: '54321',
-                        refeicoes: ['Café', 'Almoço', 'Jantar'],
-                      ),
-                    );
-                    print("✅ Paciente inserido");
-
-                    await repoNutricionista.inserir(
-                      Nutricionista(
-                        nome: "Carlos",
-                        email: 'carlos@nutri.com',
-                        senha: 'testesenha3',
-                        codigo: '678901',
-                      ),
-                    );
-                    print("✅ Nutricionista inserido");
-
                     print("\n========== LISTANDO USUÁRIOS ==========");
                     final usuarios = await repoUsuario.listar();
                     for (var u in usuarios) {
-                      print(
-                        "ID: ${u.id} | Nome: ${u.nome} | Email: ${u.email} | Código: ${u.codigo}",
-                      );
+                      if (usuarios.isEmpty) {
+                        print("Nenhum usuário encontrado.");
+                        break;
+                      } else {
+                        print(
+                          "ID: ${u.id} | Nome: ${u.nome} | senha: ${u.senha} | Email: ${u.email} | Código: ${u.codigo}",
+                        );
+                      }
                     }
 
                     print("\n========== LISTANDO PACIENTES ==========");
                     final pacientes = await repoPaciente.listar();
-                    for (var p in pacientes) {
-                      print(
-                        "ID: ${p.id} | Nome: ${p.nome} | Email: ${p.email} | Refeições: ${p.refeicoes} | Código: ${p.codigo}",
-                      );
+                    if (pacientes.isEmpty) {
+                      print("Nenhum paciente encontrado.");
+                    } else {
+                      for (var p in pacientes) {
+                        print(
+                          "ID: ${p.id} | Nome: ${p.nome} | senha: ${p.senha} | Email: ${p.email} | Refeições: ${p.refeicoes} | Código: ${p.codigo}",
+                        );
+                      }
                     }
 
                     print("\n========== LISTANDO NUTRICIONISTAS ==========");
                     final nutri = await repoNutricionista.listar();
-                    for (var n in nutri) {
-                      print(
-                        "ID: ${n.id} | Nome: ${n.nome} | Email: ${n.email} | CRN: ${n.crn} | Código: ${n.codigo}",
-                      );
+                    if (nutri.isEmpty) {
+                      print("Nenhum nutricionista encontrado.");
+                    } else {
+                      for (var n in nutri) {
+                        print(
+                          "ID: ${n.id} | Nome: ${n.nome} | senha: ${n.senha} | Email: ${n.email} | CRN: ${n.crn} | Código: ${n.codigo}",
+                        );
+                      }
                     }
-
-                    print("\n========== TESTE DE BUSCA ==========");
-                    final paciente1 = await repoPaciente.buscarPorId(1);
-                    if (paciente1 != null) {
-                      print("✅ Paciente encontrado: ${paciente1.nome}");
-                    }
-
-                    final nutri1 = await repoNutricionista.buscarPorId(1);
-                    if (nutri1 != null) {
-                      print("✅ Nutricionista encontrado: ${nutri1.nome}");
-                    }
-
-                    print("\n========== TODOS OS TESTES CONCLUÍDOS ==========");
                   } catch (e) {
                     print("❌ ERRO: $e");
                   }
                 },
-                child: const Text("Executar Teste Completo"),
+                child: const Text("Mostrar Dados no Console"),
               ),
-              const SizedBox(height: 20),
 
               const SizedBox(height: 20),
 
-              // BOTÃO PARA VOLTAR
+              // Adicione este botão dentro da Column do seu build
               ElevatedButton(
-                // 👈 A chave é esta função: Navigator.pop(context)
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CadastroUsuarioPage(),
+                    ),
+                  );
                 },
-                child: const Text("Voltar para a Tela Principal"),
+                child: const Text("Ir para Formulário de Usuário"),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Adicione este botão dentro da Column do seu build
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CadastroNutricionistaPage(),
+                    ),
+                  );
+                },
+                child: const Text("Ir para Formulário de Nutricionista"),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Adicione este botão dentro da Column do seu build
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CadastroPacientePage(),
+                    ),
+                  );
+                },
+                child: const Text("Ir para Formulário de Paciente"),
               ),
             ],
+          ),
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SizedBox(
+            // Usamos SizedBox para forçar a largura total
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              // Usamos ElevatedButton.icon para adicionar um ícone
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_back), // Ícone de destaque
+              label: const Text("VOLTAR PARA O MENU PRINCIPAL"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                ), // Aumenta a altura
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ),
       ),
