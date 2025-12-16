@@ -1,51 +1,83 @@
+import 'dart:convert';
 import 'usuario.dart';
-import 'dart:math';
 
-const String _caracteresCRN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-
-/// Gera um código CRN alfanumérico aleatório.
-String gerarCRN({int length = 10}) {
-  final random = Random();
-  final buffer = StringBuffer();
-  // Garante que o comprimento seja positivo
-  if (length <= 0) {
-    return '';
-  }
-  for (int i = 0; i < length; i++) {
-    // Seleciona um caractere aleatório da nossa constante
-    buffer.write(_caracteresCRN[random.nextInt(_caracteresCRN.length)]);
-  }
-  return buffer.toString();
-}
-
+// --- CLASSE NUTRICIONISTA (FILHO) ---
 class Nutricionista extends Usuario {
   String crn;
+  List<int> pacientesIds;
 
+  // 1. CONSTRUTOR CORRIGIDO
   Nutricionista({
-    int? id,
-    required String nome,
-    required String email,
-    required String senha,
-    String? crn,
-    required String codigo,
-  }) : crn = crn ?? gerarCRN(length: 10),
-       super(id: id, nome: nome, email: email, senha: senha, codigo: codigo);
+    super.id, // Permite passar o ID do Usuario
+    required super.nome, // Preenche automaticamente o atributo da classe pai
+    required super.email,
+    required super.senha,
+    required super.codigo,
+    required this.crn,
+    List<int>? pacientesIds,
+  }) : pacientesIds = pacientesIds ?? [];
+  // Nota: Não usamos "super(...)" aqui no final porque já usamos "super.campo" acima.
 
-  factory Nutricionista.fromMap(Map<String, dynamic> map) {
+  // 2. Factory fromUsuario ajustada
+  factory Nutricionista.fromUsuario(Usuario usuario, {required String crn}) {
     return Nutricionista(
-      id: map['id'],
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      senha: usuario.senha,
+      codigo: usuario.codigo,
+      crn: crn,
+      pacientesIds: [],
+    );
+  }
+
+  // Métodos de manipulação de lista mantidos iguais
+  void adicionarPaciente(int pacienteId) {
+    if (!pacientesIds.contains(pacienteId)) {
+      pacientesIds.add(pacienteId);
+    }
+  }
+
+  void removerPaciente(int pacienteId) {
+    pacientesIds.remove(pacienteId);
+  }
+
+  bool possuiPaciente(int pacienteId) {
+    return pacientesIds.contains(pacienteId);
+  }
+
+  // 3. FromMap ajustado
+  factory Nutricionista.fromMap(Map<String, dynamic> map) {
+    List<int> listaIds = [];
+    var rawIds = map['pacientesIds'];
+
+    // Lógica de segurança para decodificar a lista
+    if (rawIds != null) {
+      if (rawIds is String && rawIds.isNotEmpty) {
+        listaIds = List<int>.from(jsonDecode(rawIds));
+      } else if (rawIds is List) {
+        listaIds = List<int>.from(rawIds);
+      }
+    }
+
+    return Nutricionista(
+      id: map['id'], // Passa para o pai
       nome: map['nome'] ?? '',
       email: map['email'] ?? '',
       senha: map['senha'] ?? '',
-      crn: map['crn'],
-      codigo: map['codigo'] ?? '',
+      codigo: map['codigo'] ?? '', // Passa para o pai
+      crn: map['crn'] ?? '',
+      pacientesIds: listaIds,
     );
   }
 
   @override
   Map<String, dynamic> toMap() {
+    // Pega o mapa da classe Pai (id, nome, email...)
     final map = super.toMap();
+    // Adiciona os campos específicos do Nutricionista
     map['crn'] = crn;
+    map['pacientesIds'] = jsonEncode(pacientesIds); // Salva como string JSON
     return map;
   }
 }

@@ -1,7 +1,7 @@
 // arquivo: main.dart
 
 import 'package:flutter/material.dart';
-import 'teste_db.dart'; // Importe a nova tela de teste
+import 'database/testeDB/teste_db.dart'; // Importe a nova tela de teste
 
 void main() {
   runApp(const MyApp());

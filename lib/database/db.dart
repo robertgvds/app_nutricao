@@ -37,7 +37,9 @@ class DB {
             email TEXT,
             senha TEXT,
             codigo TEXT,
-						refeicoes TEXT
+						refeicoes TEXT,
+            antropometria TEXT,
+            nutricionistaCrn TEXT
           );
         ''');
 
@@ -49,7 +51,8 @@ class DB {
             email TEXT,
             senha TEXT,
             crn TEXT,
-            codigo TEXT
+            codigo TEXT,
+            pacientesIds TEXT
           );
         ''');
       },

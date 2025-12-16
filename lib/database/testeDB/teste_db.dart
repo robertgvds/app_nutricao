@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'database/usuario_repository.dart';
-import 'database/paciente_repository.dart';
-import 'database/nutricionista_repository.dart';
-import 'formularioUsuario.dart';
-import 'formularioNutricionista.dart';
-import 'formularioPaciente.dart';
+import '../usuario_repository.dart';
+import '../paciente_repository.dart';
+import '../nutricionista_repository.dart';
+import 'formularios/formularioUsuario.dart';
+import 'formularios/formularioNutricionista.dart';
+import 'formularios/formularioPaciente.dart';
+import 'formularios/formularioAddRefeicao.dart';
+import 'formularios/formularioAddAntropometria.dart';
+import 'formularios/evoluiUsuario.dart';
 
 class TesteDb extends StatelessWidget {
   final repoUsuario = UsuarioRepository();
@@ -56,24 +59,75 @@ class TesteDb extends StatelessWidget {
 
                     print("\n========== LISTANDO PACIENTES ==========");
                     final pacientes = await repoPaciente.listar();
+
                     if (pacientes.isEmpty) {
                       print("Nenhum paciente encontrado.");
                     } else {
                       for (var p in pacientes) {
+                        // 1. DADOS BÁSICOS
                         print(
-                          "ID: ${p.id} | Nome: ${p.nome} | senha: ${p.senha} | Email: ${p.email} | Refeições: ${p.refeicoes} | Código: ${p.codigo}",
+                          "ID: ${p.id} | Nome: ${p.nome} | Email: ${p.email} | Senha: ${p.senha} | Código: ${p.codigo} | CRN Nutri: ${p.nutricionistaCrn}",
+                        );
+
+                        // 2. DADOS CORPORAIS (NOVO BLOCO)
+                        if (p.antropometria == null) {
+                          print("   └── [Sem medidas corporais cadastradas]");
+                        } else {
+                          final d = p.antropometria!;
+                          print("   └── [MEDIDAS CORPORAIS]");
+                          print("       • Peso: ${d.massaCorporal ?? '--'} kg");
+                          print(
+                            "       • Gordura: ${d.massaGordura ?? '--'} kg (${d.percentualGordura ?? '--'}%)",
+                          );
+                          print(
+                            "       • Massa Esq.: ${d.massaEsqueletica ?? '--'} kg",
+                          );
+                          print("       • IMC: ${d.imc ?? '--'}");
+                          print("       • CMB: ${d.cmb ?? '--'} cm");
+                          print(
+                            "       • RCQ: ${d.relacaoCinturaQuadril ?? '--'}",
+                          );
+                        }
+
+                        // 3. REFEIÇÕES
+                        if (p.refeicoes.isEmpty) {
+                          print("   └── [Sem refeições cadastradas]");
+                        } else {
+                          for (var r in p.refeicoes) {
+                            String itens = r.alimentos
+                                .map((a) => a.nome)
+                                .join(', ');
+
+                            print("   └── REFEIÇÃO: ${r.nome.toUpperCase()}");
+                            print(
+                              "       • Totais: ${r.caloriasTotal.toStringAsFixed(1)} kcal | ${r.pesoTotal.toStringAsFixed(1)} g",
+                            );
+                            print("       • Alimentos: [$itens]");
+                          }
+                        }
+
+                        // LINHA SEPARADORA
+                        print(
+                          "---------------------------------------------------",
                         );
                       }
                     }
 
                     print("\n========== LISTANDO NUTRICIONISTAS ==========");
                     final nutri = await repoNutricionista.listar();
+
                     if (nutri.isEmpty) {
                       print("Nenhum nutricionista encontrado.");
                     } else {
                       for (var n in nutri) {
                         print(
-                          "ID: ${n.id} | Nome: ${n.nome} | senha: ${n.senha} | Email: ${n.email} | CRN: ${n.crn} | Código: ${n.codigo}",
+                          "ID: ${n.id} | "
+                          "Nome: ${n.nome} | "
+                          "Email: ${n.email} | "
+                          "CRN: ${n.crn} | "
+                          "Código: ${n.codigo} | "
+                          "Pacientes (IDs): ${n.pacientesIds} | " // Mostra a lista [1, 2, 3]
+                          "Total: ${n.pacientesIds.length} paciente(s)", // Mostra a contagem
                         );
                       }
                     }
@@ -127,6 +181,50 @@ class TesteDb extends StatelessWidget {
                   );
                 },
                 child: const Text("Ir para Formulário de Paciente"),
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdicionarRefeicaoPage(),
+                    ),
+                  );
+                },
+                child: const Text("adicionar Refeição a um paciente"),
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AdicionarMedidasPage(),
+                    ),
+                  );
+                },
+                child: const Text("adicionar antropometria a um paciente"),
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EvolucaoUsuarioPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "evolui usuario para paciente ou nutricionista",
+                ),
               ),
             ],
           ),

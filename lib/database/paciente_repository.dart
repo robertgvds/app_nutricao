@@ -1,21 +1,49 @@
 import 'db.dart';
 import '../classes/paciente.dart';
+import '../classes/usuario.dart'; // Importação necessária
 
 class PacienteRepository {
-  // Inserir novo paciente
+  // --- MÉTODO DE EVOLUÇÃO ---
+  Future<void> evoluirDeUsuario(int usuarioId, String nutricionistaCrn) async {
+    final db = await DB.get();
+
+    // 1. Busca o usuário na tabela base
+    final result = await db.query(
+      'usuarios',
+      where: 'id = ?',
+      whereArgs: [usuarioId],
+    );
+
+    if (result.isEmpty) {
+      throw Exception("Usuário base não encontrado para evolução.");
+    }
+
+    // 2. Converte para Paciente
+    final usuarioBase = Usuario.fromMap(result.first);
+    final novoPaciente = Paciente.fromUsuario(
+      usuarioBase,
+      nutricionistaCrn: nutricionistaCrn,
+    );
+
+    // 3. Transação segura
+    await db.transaction((txn) async {
+      await txn.insert('pacientes', novoPaciente.toMap());
+      await txn.delete('usuarios', where: 'id = ?', whereArgs: [usuarioId]);
+    });
+  }
+
+  // --- MÉTODOS EXISTENTES ---
   Future<int> inserir(Paciente paciente) async {
     final db = await DB.get();
     return await db.insert('pacientes', paciente.toMap());
   }
 
-  // Listar todos os pacientes
   Future<List<Paciente>> listar() async {
     final db = await DB.get();
     final result = await db.query('pacientes');
     return result.map((e) => Paciente.fromMap(e)).toList();
   }
 
-  // Buscar paciente por ID
   Future<Paciente?> buscarPorId(int id) async {
     final db = await DB.get();
     final result = await db.query(
@@ -23,14 +51,9 @@ class PacienteRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-
-    if (result.isNotEmpty) {
-      return Paciente.fromMap(result.first);
-    }
-    return null;
+    return result.isNotEmpty ? Paciente.fromMap(result.first) : null;
   }
 
-  // Atualizar um paciente
   Future<int> atualizar(Paciente paciente) async {
     final db = await DB.get();
     return await db.update(
@@ -41,7 +64,6 @@ class PacienteRepository {
     );
   }
 
-  // Excluir paciente
   Future<int> excluir(int id) async {
     final db = await DB.get();
     return await db.delete('pacientes', where: 'id = ?', whereArgs: [id]);

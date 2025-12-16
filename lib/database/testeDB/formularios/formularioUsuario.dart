@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'database/usuario_repository.dart';
+import '../../usuario_repository.dart';
 import '/classes/usuario.dart';
 
 class CadastroUsuarioPage extends StatefulWidget {
   @override
-  _CadastroUsuarioPageState createState() => _CadastroUsuarioPageState();
+  CadastroUsuarioPageState createState() => CadastroUsuarioPageState();
 }
 
-class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
-  // 1. Criar os controladores para capturar o texto
+class CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
@@ -18,36 +17,21 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
 
   // Função para salvar no banco
   void _salvarUsuario() async {
-    // Validação simples
-    if (_nomeController.text.isEmpty || _emailController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Preencha nome e email!')));
-      return;
-    }
-
-    // 2. Criar o objeto com os dados dos controladores (.text)
     final novoUsuario = Usuario(
       nome: _nomeController.text,
       email: _emailController.text,
       senha: _senhaController.text,
       codigo: _codigoController.text,
     );
-
-    // 3. Chamar o repositório
     await _repoUsuario.inserir(novoUsuario);
 
-    // Feedback visual e limpar campos
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Usuário ${_nomeController.text} salvo com sucesso!'),
       ),
     );
-
-    // Opcional: Voltar para a tela anterior após salvar
-    // Navigator.pop(context);
-
-    // Ou apenas limpar os campos para novo cadastro:
     _nomeController.clear();
     _emailController.clear();
     _senhaController.clear();
@@ -56,7 +40,6 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
 
   @override
   void dispose() {
-    // Sempre limpe os controladores quando a tela for fechada
     _nomeController.dispose();
     _emailController.dispose();
     _senhaController.dispose();
@@ -107,7 +90,6 @@ class _CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
 
               // BOTÃO PARA VOLTAR
               ElevatedButton(
-                // 👈 A chave é esta função: Navigator.pop(context)
                 onPressed: () {
                   Navigator.pop(context);
                 },
