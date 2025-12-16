@@ -225,31 +225,33 @@ class _EvolucaoUsuarioPageState extends State<EvolucaoUsuarioPage> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
 
-              RadioListTile<TipoPerfil>(
-                title: const Text("Nutricionista"),
-                subtitle: const Text("Requer CRN"),
-                value: TipoPerfil.nutricionista,
+              RadioGroup<TipoPerfil>(
                 groupValue: _perfilSelecionado,
-                onChanged:
-                    (val) => setState(() {
-                      _perfilSelecionado = val;
-                      _dadoExtraController.clear();
-                    }),
-              ),
-              RadioListTile<TipoPerfil>(
-                title: const Text("Paciente"),
-                subtitle: const Text("Requer CRN do Nutricionista"),
-                value: TipoPerfil.paciente,
-                groupValue: _perfilSelecionado,
-                onChanged:
-                    (val) => setState(() {
-                      _perfilSelecionado = val;
-                      _dadoExtraController.clear();
-                    }),
+                onChanged: (val) {
+                  setState(() {
+                    _perfilSelecionado = val;
+                    _dadoExtraController.clear();
+                  });
+                },
+                child: Column(
+                  children: [
+                    RadioListTile<TipoPerfil>(
+                      title: const Text("Nutricionista"),
+                      subtitle: const Text("Requer CRN"),
+                      value: TipoPerfil.nutricionista,
+                      // groupValue e onChanged removidos daqui
+                    ),
+                    RadioListTile<TipoPerfil>(
+                      title: const Text("Paciente"),
+                      subtitle: const Text("Requer CRN do Nutricionista"),
+                      value: TipoPerfil.paciente,
+                      // groupValue e onChanged removidos daqui
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 20),
-
               // Campo Condicional
               if (_perfilSelecionado != null)
                 TextField(
