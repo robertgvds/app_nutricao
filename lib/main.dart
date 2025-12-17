@@ -1,14 +1,12 @@
-// arquivo: main.dart
-
 import 'package:flutter/material.dart';
 import 'database/testeDB/teste_db.dart'; // Importe a nova tela de teste
-
+import 'telas/cadastro.dart'; // Importe a tela de login
 void main() {
   runApp(const MyApp());
 }
 
 // ----------------------------------------------------
-// 1. Tela Principal (Home)
+// 1. Tela de Login (Usuário)
 // ----------------------------------------------------
 
 class HomePage extends StatelessWidget {
@@ -36,7 +34,22 @@ class HomePage extends StatelessWidget {
               },
               child: const Text("Ir para Tela de Teste de BD"),
             ),
-          ],
+          
+           const SizedBox(height: 30),
+
+            // Botão que fará o redirecionamento
+            ElevatedButton(
+              onPressed: () {
+                // MÉTODO DE REDIRECIONAMENTO DE TELA
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TelaCadastro()),
+                );
+              },
+              child: const Text("Tela de Login"),
+            ),
+          
+          ],  
         ),
       ),
     );
