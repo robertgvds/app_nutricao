@@ -1,9 +1,19 @@
 // arquivo: main.dart
-
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'database/testeDB/teste_db.dart'; // Importe a nova tela de teste
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'database/testeDB/teste_db.dart';
 
 void main() {
+  // 1. Garante que o Flutter carregue os plugins antes de iniciar
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Inicializa o driver para Windows/Linux/macOS
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(const MyApp());
 }
 
