@@ -1,12 +1,24 @@
+// arquivo: main.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'database/testeDB/teste_db.dart'; // Importe a nova tela de teste
-import 'telas/cadastro.dart'; // Importe a tela de login
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'database/testeDB/teste_db.dart';
+import 'telas/cadastro.dart';
+
 void main() {
+  // 1. Garante que o Flutter carregue os plugins antes de iniciar
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Inicializa o driver para Windows/Linux/macOS
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(const MyApp());
 }
 
 // ----------------------------------------------------
-// 1. Tela de Login (Usuário)
+// 1. Tela Principal (Home)
 // ----------------------------------------------------
 
 class HomePage extends StatelessWidget {
@@ -34,10 +46,7 @@ class HomePage extends StatelessWidget {
               },
               child: const Text("Ir para Tela de Teste de BD"),
             ),
-          
-           const SizedBox(height: 30),
-
-            // Botão que fará o redirecionamento
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
                 // MÉTODO DE REDIRECIONAMENTO DE TELA
@@ -46,10 +55,9 @@ class HomePage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => TelaCadastro()),
                 );
               },
-              child: const Text("Tela de Login"),
+              child: const Text("Ir para Tela de Cadastro"),
             ),
-          
-          ],  
+          ],
         ),
       ),
     );
