@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart'; 
+import 'package:app/database/usuario_repository.dart'; // Import do seu repositório
+import '/classes/usuario.dart'; // Import do seu model
+import 'app_colors.dart';
 
 class TelaConfirmacaoCodigo extends StatefulWidget {
-  final String nomeUsuario; 
+  final Usuario usuario;
 
-  const TelaConfirmacaoCodigo({super.key, required this.nomeUsuario});
+  const TelaConfirmacaoCodigo({super.key, required this.usuario});
 
   @override
   State<TelaConfirmacaoCodigo> createState() => _TelaConfirmacaoCodigoState();
@@ -12,6 +14,7 @@ class TelaConfirmacaoCodigo extends StatefulWidget {
 
 class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
   final _codigoController = TextEditingController();
+  final _repoUsuario = UsuarioRepository(); // Instância do repositório
   bool _codigoInvalido = false;
 
   @override
@@ -20,14 +23,37 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
     super.dispose();
   }
 
-  void _verificarCodigo() {
+  // FUNÇÃO ATUALIZADA: Salva no banco antes de navegar
+  void _verificarCodigo() async {
+    // Verificação Mock (simulada)
     if (_codigoController.text == "1234") {
       setState(() => _codigoInvalido = false);
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const TelaLoginMock()), 
-        (route) => false,
-      );
+
+      try {
+        await _repoUsuario.inserir(widget.usuario);
+
+        if (!mounted) return;
+
+        // 2. Feedback de sucesso
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cadastro realizado com sucesso!"),
+            backgroundColor: AppColors.verdeEscuro,
+          ),
+        );
+
+        // 3. Navega para a tela de Login e limpa a pilha de navegação
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const TelaLoginMock()),
+          (route) => false,
+        );
+      } catch (e) {
+        // Tratar erro de inserção no banco
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Erro ao salvar no banco de dados.")),
+        );
+      }
     } else {
       setState(() => _codigoInvalido = true);
     }
@@ -37,31 +63,23 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.branco,
-      // SafeArea impede que o ícone fique "escondido" atrás da barra de status do celular
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Alinha o ícone à esquerda
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-             
               const SizedBox(height: 10),
-              
-              // Ícone de voltar solto no topo
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 icon: const Icon(Icons.arrow_back, color: AppColors.preto, size: 28),
                 onPressed: () => Navigator.pop(context),
               ),
-
               const SizedBox(height: 10),
-
               Center(
                 child: Column(
                   children: [
-                    // Ilustração da Fruta
                     SizedBox(
                       height: 150,
                       width: 150,
@@ -72,10 +90,7 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                           const Icon(Icons.add_photo_alternate_outlined, size: 100, color: AppColors.laranja),
                       ),
                     ),
-                    
                     const SizedBox(height: 20),
-
-                    // Saudação
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
@@ -83,27 +98,22 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                         children: [
                           const TextSpan(text: "Olá, "),
                           TextSpan(
-                            text: widget.nomeUsuario, 
-                            style: const TextStyle(color: AppColors.verdeEscuro), 
+                            text: widget.usuario.nome, // Puxa o nome do objeto usuario
+                            style: const TextStyle(color: AppColors.verdeEscuro),
                           ),
                           const TextSpan(text: "!"),
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       "Após a validação dos dados, enviaremos um código de verificação para o seu e-mail.",
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                     ),
-
                     const SizedBox(height: 25),
-                    const Divider(thickness: 1, color: AppColors.cinza), 
+                    const Divider(thickness: 1, color: AppColors.cinza),
                     const SizedBox(height: 30),
-
-                    // Campo de Código
                     TextField(
                       controller: _codigoController,
                       keyboardType: TextInputType.number,
@@ -119,7 +129,6 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
                       ),
                     ),
-
                     if (_codigoInvalido)
                       const Align(
                         alignment: Alignment.centerLeft,
@@ -131,17 +140,14 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                           ),
                         ),
                       ),
-
                     const SizedBox(height: 40),
-
-                    // Botão Entrar
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
                         onPressed: _verificarCodigo,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.roxo,
+                          backgroundColor: AppColors.roxoEscuro,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),

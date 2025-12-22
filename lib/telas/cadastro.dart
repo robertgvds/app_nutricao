@@ -1,11 +1,8 @@
-// Arrumar uso do código de verificação
-// Adicionar usuário no banco de dados somente após verificação do código
-
 import 'package:flutter/material.dart';
-import 'package:app/database/usuario_repository.dart'; 
-import '/classes/usuario.dart'; 
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart'; // Máscara para formatar a data para ##/##/####
 import 'app_colors.dart';
 import 'codigoVerificacao.dart';
+import '/classes/usuario.dart';
 
 enum UserType { paciente, nutricionista }
 
@@ -19,7 +16,6 @@ class TelaCadastro extends StatefulWidget {
 class TelaCadastroState extends State<TelaCadastro> {
   UserType _selectedUser = UserType.paciente;
 
-  // Controllers para capturar o texto dos campos
   final _nomeController = TextEditingController();
   final _dataNascController = TextEditingController();
   final _crnController = TextEditingController();
@@ -27,7 +23,13 @@ class TelaCadastroState extends State<TelaCadastro> {
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
-  final _repoUsuario = UsuarioRepository();
+  // Definição da máscara para a data
+  final maskFormatter = MaskTextInputFormatter(
+    mask: '##/##/####', 
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
   bool _senhasNaoCoincidem = false;
 
   @override
@@ -40,34 +42,26 @@ class TelaCadastroState extends State<TelaCadastro> {
   void _validarSenhas() {
     final senha = _senhaController.text;
     final confirmar = _confirmarSenhaController.text;
-
     setState(() {
-      _senhasNaoCoincidem =
-          senha.isNotEmpty && confirmar.isNotEmpty && senha != confirmar;
+      _senhasNaoCoincidem = senha.isNotEmpty && confirmar.isNotEmpty && senha != confirmar;
     });
   }
 
-  // Função de salvamento no banco local 
-  void _executarCadastroLocal() async {
-    // 1. Criar o objeto de usuário com os dados dos controllers
-    final novoUsuario = Usuario(
+  void _irParaVerificacao() {
+    // Criamos um objeto temporário para passar os dados
+    // Os dados devem ser enviados para a tela de confirmação do código, e não salvos no bd antes da confirmação
+    final usuarioTemporario = Usuario(
       nome: _nomeController.text,
       email: _emailController.text,
       senha: _senhaController.text,
-      codigo: "", 
+      codigo: "1234", 
     );
 
-    // 2. Inserir no repositório (Banco de Dados)
-    await _repoUsuario.inserir(novoUsuario);
-
-    if (!mounted) return;
-
-    // 4. Navegar para a tela de confirmação (como solicitado no seu fluxo)
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TelaConfirmacaoCodigo(
-          nomeUsuario: _nomeController.text,
+          usuario: usuarioTemporario, // Passamos o objeto completo
         ),
       ),
     );
@@ -84,12 +78,21 @@ class TelaCadastroState extends State<TelaCadastro> {
     super.dispose();
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller, {bool obscure = false}) {
+  // Widget de TextField atualizado para aceitar máscara
+  Widget _buildTextField(
+    String hint, 
+    TextEditingController controller, {
+    bool obscure = false, 
+    List<MaskTextInputFormatter>? inputFormatters,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextField(
         controller: controller,
         obscureText: obscure,
+        inputFormatters: inputFormatters, // Aplica a máscara aqui
+        keyboardType: keyboardType,
         cursorColor: AppColors.roxoEscuro,
         decoration: InputDecoration(
           hintText: hint,
@@ -158,11 +161,19 @@ class TelaCadastroState extends State<TelaCadastro> {
             const SizedBox(height: 25),
             const Text("Dados Pessoais", style: TextStyle(fontWeight: FontWeight.bold)),
             _buildTextField("Insira seu nome completo", _nomeController),
-            _buildTextField("Insira sua data de nascimento", _dataNascController),
+            
+            // CAMPO COM MÁSCARA DE DATA
+            _buildTextField(
+              "Insira sua Data de Nascimento", 
+              _dataNascController,
+              inputFormatters: [maskFormatter], // Máscara aplicada
+              keyboardType: TextInputType.number,
+            ),
 
             if (_selectedUser == UserType.nutricionista)
               _buildTextField("Insira seu CRN", _crnController),
 
+            
             const SizedBox(height: 20),
             const Text("Dados de Acesso", style: TextStyle(fontWeight: FontWeight.bold)),
             _buildTextField("E-mail", _emailController),
@@ -176,18 +187,14 @@ class TelaCadastroState extends State<TelaCadastro> {
               ),
 
             const SizedBox(height: 30),
-
-            // BOTÃO REALIZAR CADASTRO
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: _senhasNaoCoincidem ? null : _executarCadastroLocal,
+                onPressed: _senhasNaoCoincidem ? null : _irParaVerificacao,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.roxoEscuro,
-                  disabledBackgroundColor: AppColors.cinza,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  elevation: 0,
                 ),
                 child: const Text(
                   "Realizar Cadastro",

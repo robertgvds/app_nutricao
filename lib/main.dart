@@ -16,11 +16,6 @@ void main() {
   }
   runApp(const MyApp());
 }
-
-// ----------------------------------------------------
-// 1. Tela Principal (Home)
-// ----------------------------------------------------
-
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
