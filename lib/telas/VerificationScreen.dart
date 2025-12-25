@@ -1,12 +1,26 @@
-import 'package:flutter/material.dart';
-import 'package:app/database/usuario_repository.dart'; // Import do seu repositório
+import 'package:app/database/nutricionista_repository.dart';
+import 'package:app/database/paciente_repository.dart';
+import 'package:app/telas/LoginScreen.dart';
+import 'package:app/telas/RegisterScreen.dart';
+
 import '/classes/usuario.dart'; // Import do seu model
+import '/classes/paciente.dart';
+import '/classes/nutricionista.dart';
+
+import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class TelaConfirmacaoCodigo extends StatefulWidget {
   final Usuario usuario;
+  final UserType userType;
+  final String crn;
 
-  const TelaConfirmacaoCodigo({super.key, required this.usuario});
+  const TelaConfirmacaoCodigo({
+    super.key,
+    required this.usuario,
+    required this.userType,
+    required this.crn,
+  });
 
   @override
   State<TelaConfirmacaoCodigo> createState() => _TelaConfirmacaoCodigoState();
@@ -14,7 +28,10 @@ class TelaConfirmacaoCodigo extends StatefulWidget {
 
 class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
   final _codigoController = TextEditingController();
-  final _repoUsuario = UsuarioRepository(); // Instância do repositório
+
+  final _repoPaciente = PacienteRepository();
+  final _repoNutricionista = NutricionistaRepository();
+
   bool _codigoInvalido = false;
 
   @override
@@ -23,36 +40,48 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
     super.dispose();
   }
 
-  // FUNÇÃO ATUALIZADA: Salva no banco antes de navegar
   void _verificarCodigo() async {
-    // Verificação Mock (simulada)
-    if (_codigoController.text == "1234") {
+    if (_codigoController.text == "1234") { // ALTERAR VERIFICAÇÃO
       setState(() => _codigoInvalido = false);
 
       try {
-        await _repoUsuario.inserir(widget.usuario);
+        if (widget.userType == UserType.paciente) {
+          // Cria um objeto Paciente a partir dos dados do widget.usuario (que veio da tela de registro)
+          Paciente novoPaciente = Paciente(
+            nome: widget.usuario.nome,
+            email: widget.usuario.email,
+            senha: widget.usuario.senha,
+            codigo: widget.usuario.codigo,
+          );
+
+          await _repoPaciente.inserir(novoPaciente);
+          print("✅ PACIENTE SALVO");
+        }
+        else {
+          Nutricionista novoNutri = Nutricionista(
+            nome: widget.usuario.nome,
+            email: widget.usuario.email,
+            senha: widget.usuario.senha,
+            codigo: widget.usuario.codigo,
+            crn: widget.crn, 
+          );
+
+          await _repoNutricionista.inserir(novoNutri);
+          print("✅ NUTRICIONISTA SALVO");
+        }
 
         if (!mounted) return;
 
-        // 2. Feedback de sucesso
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Cadastro realizado com sucesso!"),
-            backgroundColor: AppColors.verdeEscuro,
-          ),
-        );
-
-        // 3. Navega para a tela de Login e limpa a pilha de navegação
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const TelaLoginMock()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
           (route) => false,
         );
       } catch (e) {
-        // Tratar erro de inserção no banco
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Erro ao salvar no banco de dados.")),
-        );
+        print("Erro detalhado: $e");
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erro ao salvar: $e")));
       }
     } else {
       setState(() => _codigoInvalido = true);
@@ -73,7 +102,11 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(Icons.arrow_back, color: AppColors.preto, size: 28),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.preto,
+                  size: 28,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(height: 10),
@@ -86,20 +119,33 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                       child: Image.asset(
                         'assets/fruta_logo.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => 
-                          const Icon(Icons.add_photo_alternate_outlined, size: 100, color: AppColors.laranja),
+                        errorBuilder:
+                            (context, error, stackTrace) => const Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 100,
+                              color: AppColors.laranja,
+                            ),
                       ),
                     ),
                     const SizedBox(height: 20),
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.preto),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.preto,
+                        ),
                         children: [
                           const TextSpan(text: "Olá, "),
                           TextSpan(
-                            text: widget.usuario.nome, // Puxa o nome do objeto usuario
-                            style: const TextStyle(color: AppColors.verdeEscuro),
+                            text:
+                                widget
+                                    .usuario
+                                    .nome, // Puxa o nome do objeto usuario
+                            style: const TextStyle(
+                              color: AppColors.verdeEscuro,
+                            ),
                           ),
                           const TextSpan(text: "!"),
                         ],
@@ -107,9 +153,12 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      "Após a validação dos dados, enviaremos um código de verificação para o seu e-mail.",
+                      "Um código de verificação foi enviado para o seu e-mail.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 25),
                     const Divider(thickness: 1, color: AppColors.cinza),
@@ -126,7 +175,10 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 25,
+                          vertical: 18,
+                        ),
                       ),
                     ),
                     if (_codigoInvalido)
@@ -135,8 +187,11 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                         child: Padding(
                           padding: EdgeInsets.only(left: 15, top: 10),
                           child: Text(
-                            "Digite o código correto!",
-                            style: TextStyle(color: AppColors.laranjaEscuro, fontSize: 14),
+                            "Código Incorreto!",
+                            style: TextStyle(
+                              color: AppColors.laranjaEscuro,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ),
@@ -155,7 +210,11 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
                         ),
                         child: const Text(
                           "Entrar",
-                          style: TextStyle(color: AppColors.branco, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: AppColors.branco,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -174,5 +233,6 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
 class TelaLoginMock extends StatelessWidget {
   const TelaLoginMock({super.key});
   @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Tela de Login")));
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: Text("Tela de Login")));
 }

@@ -9,7 +9,7 @@ import 'antropometria.dart';
 class Paciente extends Usuario {
   // CRN do nutricionista responsável pelo paciente
   // Utilizado para vínculo e controle profissional
-  String nutricionistaCrn;
+  String? nutricionistaCrn;
 
   // Lista de refeições associadas ao paciente
   // Cada refeição contém seus respectivos alimentos
@@ -27,7 +27,7 @@ class Paciente extends Usuario {
     required super.email,
     required super.senha,
     required super.codigo,
-    required this.nutricionistaCrn,
+    this.nutricionistaCrn,
     this.refeicoes = const [],
     this.antropometria,
   });

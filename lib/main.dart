@@ -1,9 +1,9 @@
 // arquivo: main.dart
 import 'dart:io';
+import 'package:app/telas/LoginScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'database/testeDB/teste_db.dart';
-import 'telas/cadastro.dart';
 
 void main() {
   // 1. Garante que o Flutter carregue os plugins antes de iniciar
@@ -16,6 +16,7 @@ void main() {
   }
   runApp(const MyApp());
 }
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -47,10 +48,10 @@ class HomePage extends StatelessWidget {
                 // MÉTODO DE REDIRECIONAMENTO DE TELA
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TelaCadastro()),
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
                 );
               },
-              child: const Text("Ir para Tela de Cadastro"),
+              child: const Text("Ir para Tela de Login"),
             ),
           ],
         ),
