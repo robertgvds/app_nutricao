@@ -41,7 +41,8 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
   }
 
   void _verificarCodigo() async {
-    if (_codigoController.text == "1234") { // ALTERAR VERIFICAÇÃO
+    if (_codigoController.text == "1234") {
+      // ALTERAR VERIFICAÇÃO
       setState(() => _codigoInvalido = false);
 
       try {
@@ -51,19 +52,22 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
             nome: widget.usuario.nome,
             email: widget.usuario.email,
             senha: widget.usuario.senha,
+            dataNascimento:
+                "0000-00-00", // Placeholder, ajustar conforme necessário dps
             codigo: widget.usuario.codigo,
           );
 
           await _repoPaciente.inserir(novoPaciente);
           print("✅ PACIENTE SALVO");
-        }
-        else {
+        } else {
           Nutricionista novoNutri = Nutricionista(
             nome: widget.usuario.nome,
             email: widget.usuario.email,
             senha: widget.usuario.senha,
             codigo: widget.usuario.codigo,
-            crn: widget.crn, 
+            dataNascimento:
+                "0000-00-00", // Placeholder, ajustar conforme necessário dps
+            crn: widget.crn,
           );
 
           await _repoNutricionista.inserir(novoNutri);

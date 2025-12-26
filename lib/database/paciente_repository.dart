@@ -6,6 +6,44 @@ import '../classes/usuario.dart'; // Necessário para a evolução de Usuario �
 // Centraliza toda a lógica de persistência no banco de dados
 class PacienteRepository {
   // ------------------------------------------------------------------
+  // NOVO MÉTODO: VERIFICAÇÃO DE EMAIL
+  // ------------------------------------------------------------------
+  // Verifica se o email já está cadastrado em qualquer tabela (Nutri, Paciente ou Usuario)
+  // Retorna true se encontrar, false se não encontrar.
+  Future<bool> verificarEmailExiste(String email) async {
+    final db = await DB.get();
+
+    // 1. Verifica na tabela de nutricionistas
+    final List<Map<String, dynamic>> resNutri = await db.query(
+      'nutricionistas',
+      columns: ['id'],
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (resNutri.isNotEmpty) return true;
+
+    // 2. Verifica na tabela de pacientes
+    final List<Map<String, dynamic>> resPaciente = await db.query(
+      'pacientes',
+      columns: ['id'],
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (resPaciente.isNotEmpty) return true;
+
+    // 3. Verifica na tabela base de usuarios
+    final List<Map<String, dynamic>> resUsuario = await db.query(
+      'usuarios',
+      columns: ['id'],
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (resUsuario.isNotEmpty) return true;
+
+    return false;
+  }
+
+  // ------------------------------------------------------------------
   // MÉTODO DE EVOLUÇÃO
   // ------------------------------------------------------------------
   // Converte um Usuario existente em um Paciente

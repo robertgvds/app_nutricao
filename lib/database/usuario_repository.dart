@@ -60,6 +60,44 @@ class UsuarioRepository {
     return await db.insert('usuarios', usuario.toMap());
   }
 
+  // Verifica se o email já está cadastrado em qualquer uma das tabelas.
+  // Retorna true se encontrar, false se não encontrar.
+  Future<bool> verificarEmailExiste(String email) async {
+    final db = await DB.get();
+
+    // 1. Verifica na tabela de nutricionistas
+    final List<Map<String, dynamic>> resNutri = await db.query(
+      'nutricionistas',
+      columns: [
+        'id',
+      ], // Otimização: traz apenas o ID, pois não precisamos dos dados
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (resNutri.isNotEmpty) return true;
+
+    // 2. Verifica na tabela de pacientes
+    final List<Map<String, dynamic>> resPaciente = await db.query(
+      'pacientes',
+      columns: ['id'],
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (resPaciente.isNotEmpty) return true;
+
+    // 3. Verifica na tabela base de usuarios
+    final List<Map<String, dynamic>> resUsuario = await db.query(
+      'usuarios',
+      columns: ['id'],
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (resUsuario.isNotEmpty) return true;
+
+    // Se passou por todas as verificações e não encontrou nada:
+    return false;
+  }
+
   // Retorna todos os usuários da tabela 'usuarios'
   Future<List<Usuario>> listar() async {
     final db = await DB.get();

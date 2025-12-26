@@ -27,6 +27,7 @@ class Paciente extends Usuario {
     required super.email,
     required super.senha,
     required super.codigo,
+    required super.dataNascimento,
     this.nutricionistaCrn,
     this.refeicoes = const [],
     this.antropometria,
@@ -47,6 +48,7 @@ class Paciente extends Usuario {
       codigo: usuario.codigo,
       nutricionistaCrn: nutricionistaCrn,
       refeicoes: [],
+      dataNascimento: usuario.dataNascimento,
       antropometria: null,
     );
   }
@@ -126,6 +128,7 @@ class Paciente extends Usuario {
       codigo: map['codigo'] ?? '',
       nutricionistaCrn: map['nutricionistaCrn'] ?? '',
       refeicoes: listaDecodificada,
+      dataNascimento: map['dataNascimento'] ?? '',
       antropometria: dadosDecodificados,
     );
   }

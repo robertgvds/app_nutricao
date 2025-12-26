@@ -87,6 +87,7 @@ class RegisterScreenState extends State<RegisterScreen> {
       email: _emailController.text,
       senha: _senhaController.text,
       codigo: "1234",
+      dataNascimento: _dataNascController.text,
     );
 
     Navigator.push(
