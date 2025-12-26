@@ -40,7 +40,8 @@ class DB {
             nome TEXT,
             email TEXT,
             senha TEXT,
-            codigo TEXT
+            codigo TEXT,
+            dataNascimento TEXT
           );
         ''');
 
@@ -56,6 +57,7 @@ class DB {
             codigo TEXT,
             refeicoes TEXT,
             antropometria TEXT,
+            dataNascimento TEXT,
             nutricionistaCrn TEXT
           );
         ''');
@@ -71,6 +73,7 @@ class DB {
             senha TEXT,
             crn TEXT,
             codigo TEXT,
+            dataNascimento TEXT,
             pacientesIds TEXT
           );
         ''');

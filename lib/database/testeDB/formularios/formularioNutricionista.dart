@@ -36,6 +36,7 @@ class CadastroNutricionistaPageState extends State<CadastroNutricionistaPage> {
       senha: _senhaController.text,
       codigo: _codigoController.text,
       crn: _crnController.text,
+      dataNascimento: "", // Data de nascimento vazia por enquanto
       pacientesIds: [], // Inicializa a lista de pacientes vazia
     );
 

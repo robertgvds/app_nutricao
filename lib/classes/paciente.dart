@@ -9,7 +9,7 @@ import 'antropometria.dart';
 class Paciente extends Usuario {
   // CRN do nutricionista responsável pelo paciente
   // Utilizado para vínculo e controle profissional
-  String nutricionistaCrn;
+  String? nutricionistaCrn;
 
   // Lista de refeições associadas ao paciente
   // Cada refeição contém seus respectivos alimentos
@@ -27,7 +27,8 @@ class Paciente extends Usuario {
     required super.email,
     required super.senha,
     required super.codigo,
-    required this.nutricionistaCrn,
+    required super.dataNascimento,
+    this.nutricionistaCrn,
     this.refeicoes = const [],
     this.antropometria,
   });
@@ -47,6 +48,7 @@ class Paciente extends Usuario {
       codigo: usuario.codigo,
       nutricionistaCrn: nutricionistaCrn,
       refeicoes: [],
+      dataNascimento: usuario.dataNascimento,
       antropometria: null,
     );
   }
@@ -126,6 +128,7 @@ class Paciente extends Usuario {
       codigo: map['codigo'] ?? '',
       nutricionistaCrn: map['nutricionistaCrn'] ?? '',
       refeicoes: listaDecodificada,
+      dataNascimento: map['dataNascimento'] ?? '',
       antropometria: dadosDecodificados,
     );
   }

@@ -50,6 +50,7 @@ class CadastroPacientePageState extends State<CadastroPacientePage> {
         email: _emailController.text,
         senha: _senhaController.text,
         codigo: _codigoController.text,
+        dataNascimento: "", // Data de nascimento vazia por enquanto
         nutricionistaCrn: _crnNutricionistaController.text,
       );
 

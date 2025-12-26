@@ -17,6 +17,7 @@ class Nutricionista extends Usuario {
   // por meio do uso de "super.campo"
   Nutricionista({
     super.id, // ID herdado do Usuario (pode ser nulo)
+    required super.dataNascimento, // Data de nascimento do nutricionista
     required super.nome, // Nome do nutricionista
     required super.email, // Email utilizado para login/contato
     required super.senha, // Senha de autenticação
@@ -32,6 +33,7 @@ class Nutricionista extends Usuario {
     return Nutricionista(
       id: usuario.id,
       nome: usuario.nome,
+      dataNascimento: usuario.dataNascimento,
       email: usuario.email,
       senha: usuario.senha,
       codigo: usuario.codigo,
@@ -78,6 +80,7 @@ class Nutricionista extends Usuario {
     return Nutricionista(
       id: map['id'], // ID herdado do Usuario
       nome: map['nome'] ?? '',
+      dataNascimento: map['dataNascimento'] ?? '',
       email: map['email'] ?? '',
       senha: map['senha'] ?? '',
       codigo: map['codigo'] ?? '', // Código herdado do Usuario

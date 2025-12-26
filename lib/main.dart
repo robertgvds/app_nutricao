@@ -1,7 +1,7 @@
 // arquivo: main.dart
 import 'dart:io';
+import 'package:app/telas/LoginScreen.dart';
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'database/testeDB/teste_db.dart';
 
@@ -16,10 +16,6 @@ void main() {
   }
   runApp(const MyApp());
 }
-
-// ----------------------------------------------------
-// 1. Tela Principal (Home)
-// ----------------------------------------------------
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -45,6 +41,17 @@ class HomePage extends StatelessWidget {
                 );
               },
               child: const Text("Ir para Tela de Teste de BD"),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                // MÉTODO DE REDIRECIONAMENTO DE TELA
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              },
+              child: const Text("Ir para Tela de Login"),
             ),
           ],
         ),
