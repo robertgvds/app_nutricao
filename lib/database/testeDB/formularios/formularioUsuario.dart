@@ -176,7 +176,7 @@ class CadastroUsuarioPageState extends State<CadastroUsuarioPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   width: double.infinity,
-                  color: _corResultado.withOpacity(0.1),
+                  color: _corResultado.withValues(alpha: 0.5),
                   child: Text(
                     _resultadoPesquisa,
                     textAlign: TextAlign.center,
