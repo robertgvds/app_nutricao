@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'RegisterScreen.dart'; 
+import 'RegisterScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20), // Ajustado para alinhar com o botão
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Alinha o botão à esquerda
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // Alinha o botão à esquerda
           children: [
             const SizedBox(height: 30),
             // BOTÃO VOLTAR
@@ -70,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               onPressed: () => Navigator.pop(context),
             ),
-            
+
             // CONTEÚDO CENTRALIZADO
             Column(
               children: [
@@ -87,8 +88,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Image.asset(
                         'assets/fruta_logo.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => 
-                          const Icon(Icons.add_photo_alternate_outlined, size: 100, color: AppColors.laranja),
+                        errorBuilder:
+                            (context, error, stackTrace) => const Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 100,
+                              color: AppColors.laranja,
+                            ),
                       ),
                     ),
                   ),
@@ -163,7 +168,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
                         );
                       },
                       child: const Text(

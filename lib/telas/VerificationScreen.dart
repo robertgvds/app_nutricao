@@ -52,8 +52,7 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
             nome: widget.usuario.nome,
             email: widget.usuario.email,
             senha: widget.usuario.senha,
-            dataNascimento:
-                "0000-00-00", // Placeholder, ajustar conforme necessário dps
+            dataNascimento: widget.usuario.dataNascimento,
             codigo: widget.usuario.codigo,
           );
 
@@ -65,8 +64,7 @@ class _TelaConfirmacaoCodigoState extends State<TelaConfirmacaoCodigo> {
             email: widget.usuario.email,
             senha: widget.usuario.senha,
             codigo: widget.usuario.codigo,
-            dataNascimento:
-                "0000-00-00", // Placeholder, ajustar conforme necessário dps
+            dataNascimento: widget.usuario.dataNascimento,
             crn: widget.crn,
           );
 

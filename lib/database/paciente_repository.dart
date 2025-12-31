@@ -6,41 +6,29 @@ import '../classes/usuario.dart'; // Necessário para a evolução de Usuario �
 // Centraliza toda a lógica de persistência no banco de dados
 class PacienteRepository {
   // ------------------------------------------------------------------
-  // NOVO MÉTODO: VERIFICAÇÃO DE EMAIL
+  // VERIFICAÇÃO DE EMAIL RETORNANDO USUARIO
   // ------------------------------------------------------------------
-  // Verifica se o email já está cadastrado em qualquer tabela (Nutri, Paciente ou Usuario)
-  // Retorna true se encontrar, false se não encontrar.
-  Future<bool> verificarEmailExiste(String email) async {
+  // Verifica se o email já está cadastrado em qualquer tabela.
+  // Se encontrar, retorna um objeto Usuario com os dados.
+  // Se não encontrar, retorna null.
+  Future<Usuario?> verificarEmailExiste(String email) async {
     final db = await DB.get();
 
-    // 1. Verifica na tabela de nutricionistas
-    final List<Map<String, dynamic>> resNutri = await db.query(
-      'nutricionistas',
-      columns: ['id'],
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-    if (resNutri.isNotEmpty) return true;
-
-    // 2. Verifica na tabela de pacientes
+    // 1. Verifica na tabela de pacientes
     final List<Map<String, dynamic>> resPaciente = await db.query(
       'pacientes',
-      columns: ['id'],
+      // columns: null, // Ao omitir columns, o SQLite retorna todas as colunas (*)
       where: 'email = ?',
       whereArgs: [email],
     );
-    if (resPaciente.isNotEmpty) return true;
 
-    // 3. Verifica na tabela base de usuarios
-    final List<Map<String, dynamic>> resUsuario = await db.query(
-      'usuarios',
-      columns: ['id'],
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-    if (resUsuario.isNotEmpty) return true;
+    if (resPaciente.isNotEmpty) {
+      // Retorna os dados mapeados para um objeto Usuario
+      return Paciente.fromMap(resPaciente.first);
+    }
 
-    return false;
+    // Se não encontrou na tabela, retorna null
+    return null;
   }
 
   // ------------------------------------------------------------------
