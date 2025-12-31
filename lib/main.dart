@@ -5,15 +5,26 @@ import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'database/testeDB/teste_db.dart';
 
-void main() {
-  // 1. Garante que o Flutter carregue os plugins antes de iniciar
+// --- NOVOS IMPORTS DO FIREBASE ---
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; 
+// ---------------------------------
+
+void main() async { 
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Inicializa o driver para Windows/Linux/macOS
+  // --- INICIALIZAÇÃO DO FIREBASE ---
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // ---------------------------------
+
+  // 2. Inicializa o driver para Windows/Linux/macOS (SQLite)
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+  
   runApp(const MyApp());
 }
 
@@ -31,10 +42,8 @@ class HomePage extends StatelessWidget {
             const Text("Bem-vindo ao App!", style: TextStyle(fontSize: 20)),
             const SizedBox(height: 30),
 
-            // Botão que fará o redirecionamento
             ElevatedButton(
               onPressed: () {
-                // MÉTODO DE REDIRECIONAMENTO DE TELA
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => TesteDb()),
@@ -45,10 +54,9 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                // MÉTODO DE REDIRECIONAMENTO DE TELA
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
                 );
               },
               child: const Text("Ir para Tela de Login"),
@@ -60,10 +68,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ----------------------------------------------------
-// 2. Widget Raiz (MyApp)
-// ----------------------------------------------------
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -71,7 +75,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      // Define a tela principal como HomePage
       home: HomePage(),
     );
   }
