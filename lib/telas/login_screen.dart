@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'app_colors.dart';
 import 'register_screen.dart';
-import 'forgot_password_screen.dart'; // Importe a tela aqui
+import 'forgot_password_screen.dart'; 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            const SizedBox(height: 10), // Espaçamento ajustado
+            const SizedBox(height: 10), 
             
             SizedBox(
               width: double.infinity, height: 55,

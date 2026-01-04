@@ -111,7 +111,6 @@ class RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
-  // --- LÓGICA DE CADASTRO COM NAVEGAÇÃO IMEDIATA ---
   Future<void> _cadastrarNoFirebase() async {
     setState(() => _estaCarregando = true);
     

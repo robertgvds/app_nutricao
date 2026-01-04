@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../widgets/auth_check.dart'; // Ou a tua tela principal/Home
+import '../widgets/auth_check.dart'; 
 import 'app_colors.dart';
 
 class VerificationScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   @override
   void initState() {
     super.initState();
-    // ESTRATÉGIA MAIS VIÁVEL: Verificar automaticamente a cada 3 segundos
+    // estratégia mais viável: Verificar automaticamente a cada 3 segundos
     // Assim o utilizador não precisa de clicar em nada após validar o e-mail
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       _verificarStatus(silencioso: true);
@@ -29,7 +29,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // IMPORTANTE: Cancela o timer ao sair da tela
+    _timer?.cancel(); // Cancela o timer ao sair da tela
     super.dispose();
   }
 
