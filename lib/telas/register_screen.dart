@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import '../telas/verification_screen.dart'; // Garanta que o caminho está correto
 import 'app_colors.dart';
-import 'VerificationScreen.dart';
-import '/classes/usuario.dart';
 
 enum UserType { paciente, nutricionista }
 
@@ -38,6 +38,7 @@ class RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
+    // Adiciona listeners para validação em tempo real em todos os campos
     List<TextEditingController> controllers = [
       _nomeController, _dataNascController, _crnController,
       _emailController, _senhaController, _confirmarSenhaController,
@@ -58,8 +59,7 @@ class RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  // --- MÉTODOS DE VALIDAÇÃO ORIGINAIS MANTIDOS ---
-
+  // --- MÉTODOS DE VALIDAÇÃO ---
   String? _validarRequisitosSenha(String senha) {
     if (senha.isEmpty) return null;
     if (senha.length < 8) return "A senha deve ter pelo menos 8 caracteres";
@@ -92,74 +92,53 @@ class RegisterScreenState extends State<RegisterScreen> {
     final confirmar = _confirmarSenhaController.text;
     final erroSenha = _validarRequisitosSenha(senha);
     final erroData = _validarDataNascimento(_dataNascController.text);
+    
     final coincidem = senha.isNotEmpty && confirmar.isNotEmpty && senha != confirmar;
-
-    final camposBasicosOk = _nomeController.text.isNotEmpty &&
-        _dataNascController.text.length == 10 &&
-        _emailController.text.isNotEmpty &&
-        senha.isNotEmpty &&
-        confirmar.isNotEmpty;
-
-    final crnOk = (_selectedUser == UserType.paciente) || _crnController.text.isNotEmpty;
 
     setState(() {
       _erroRequisitoSenha = erroSenha;
       _senhasNaoCoincidem = coincidem;
+      
+      final camposBasicosOk = _nomeController.text.isNotEmpty &&
+          _dataNascController.text.length == 10 &&
+          _emailController.text.contains('@') &&
+          senha.isNotEmpty &&
+          confirmar.isNotEmpty;
+
+      final crnOk = (_selectedUser == UserType.paciente) || _crnController.text.isNotEmpty;
+
       _formularioCompleto = camposBasicosOk && crnOk && erroSenha == null && erroData == null;
     });
   }
 
-  // --- LÓGICA DE CADASTRO CORRIGIDA ---
-
+  // --- LÓGICA DE CADASTRO COM NAVEGAÇÃO IMEDIATA ---
   Future<void> _cadastrarNoFirebase() async {
     setState(() => _estaCarregando = true);
+    
     try {
-      // 1. Cria o usuário no Firebase
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _senhaController.text.trim(),
-      );
-
-      // 2. Envia e-mail de verificação (com tratamento de erro interno)
-      try {
-        print("Tentando enviar e-mail para: ${userCredential.user?.email}");
-        await userCredential.user?.sendEmailVerification();
-        print("✅ Firebase aceitou a solicitação de envio.");
-      } catch (e) {
-        print("❌ ERRO ESPECÍFICO DO FIREBASE: $e");
-      }
-
-      final novoUsuario = Usuario(
-        nome: _nomeController.text,
-        email: _emailController.text.trim(),
-        senha: _senhaController.text.trim(),
-        codigo: userCredential.user!.uid,
-        dataNascimento: _dataNascController.text,
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      // Envia os dados para o Firebase Auth + Realtime Database
+      await authService.registrar(
+        _emailController.text.trim(),
+        _senhaController.text.trim(),
+        _nomeController.text.trim(),
+        _selectedUser == UserType.paciente ? 'paciente' : 'nutricionista',
+        _selectedUser == UserType.nutricionista ? _crnController.text.trim() : null,
       );
 
       if (mounted) {
-        // 3. USO DO pushReplacement: Crucial para não permitir voltar e cadastrar de novo
+        // NAVEGAÇÃO IMEDIATA: Vai para a tela de verificação logo após o sucesso
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => TelaConfirmacaoCodigo(
-              usuario: novoUsuario,
-              userType: _selectedUser,
-              crn: _crnController.text,
-            ),
-          ),
+          MaterialPageRoute(builder: (context) => const VerificationScreen()),
         );
       }
-    } on FirebaseAuthException catch (e) {
-      String erro = "Erro ao cadastrar";
-      if (e.code == 'email-already-in-use') erro = "E-mail já cadastrado.";
-      if (e.code == 'invalid-email') erro = "E-mail inválido.";
-      if (e.code == 'weak-password') erro = "A senha é muito fraca.";
-
+      
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(erro), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -167,8 +146,7 @@ class RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // --- WIDGETS AUXILIARES ---
-
+  // --- WIDGETS DE DESIGN (DESIGN ORIGINAL) ---
   Widget _buildErrorMessage(String message, {Color color = Colors.red}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -187,6 +165,7 @@ class RegisterScreenState extends State<RegisterScreen> {
         obscureText: obscure,
         inputFormatters: inputFormatters,
         keyboardType: keyboardType,
+        onChanged: (_) => _atualizarEstadoFormulario(), // Resposta visual imediata
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
@@ -248,13 +227,12 @@ class RegisterScreenState extends State<RegisterScreen> {
             
             if (_senhasNaoCoincidem) _buildErrorMessage("As senhas não coincidem."),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                // O botão fica desabilitado (null) enquanto carrega
-                onPressed: (_formularioCompleto && !_senhasNaoCoincidem && !_estaCarregando) ? _cadastrarNoFirebase : null,
+                onPressed: (_formularioCompleto && !_estaCarregando) ? _cadastrarNoFirebase : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.roxoEscuro,
                   disabledBackgroundColor: Colors.grey[300],
