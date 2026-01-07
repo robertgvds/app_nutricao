@@ -1,6 +1,8 @@
+import 'package:app/services/auth_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../classes/antropometria.dart';
 import '../database/antropometria_repository.dart';
 import 'app_colors.dart';
@@ -48,27 +50,30 @@ class _AntropometriaVisualizacaoPageState
     });
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.roxo,
       appBar: AppBar(
         backgroundColor: AppColors.roxo,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title:
-            const Text('Antropometria', style: TextStyle(color: Colors.white)),
+        title: const Text('Antropometria', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () => context.read<AuthService>().logout(),
+          ),
+        ],
       ),
+      // 1. Alterado para CustomScrollView
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  Padding(
+          : CustomScrollView( 
+              slivers: [
+                // 2. O botão fica dentro de um SliverToBoxAdapter
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: SizedBox(
                       width: double.infinity,
@@ -89,8 +94,12 @@ class _AntropometriaVisualizacaoPageState
                       ),
                     ),
                   ),
+                ),
 
-                  Container(
+                // 3. A parte branca usa SliverFillRemaining para ocupar todo o espaço restante
+                SliverFillRemaining(
+                  hasScrollBody: false, // Importante: Permite que o container estique ou role conforme necessário
+                  child: Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
                       color: Colors.white,
@@ -233,11 +242,12 @@ class _AntropometriaVisualizacaoPageState
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
     );
   }
+
   Widget _buildCardResumo() {
     if (_ultimaAvaliacao == null) return const SizedBox();
 

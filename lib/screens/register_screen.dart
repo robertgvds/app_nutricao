@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../telas/verification_screen.dart'; // Garanta que o caminho está correto
+import 'verification_screen.dart'; // Garanta que o caminho está correto
 import 'app_colors.dart';
 
 enum UserType { paciente, nutricionista }
