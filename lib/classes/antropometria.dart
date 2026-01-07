@@ -1,29 +1,28 @@
-// Classe responsável por armazenar dados antropométricos de uma pessoa
 class Antropometria {
-  // Massa corporal total do indivíduo (geralmente em kg)
+  String? id_avaliacao;
+  
+
   double? massaCorporal;
-
-  // Massa de gordura corporal (em kg)
   double? massaGordura;
-
-  // Percentual de gordura corporal (%)
   double? percentualGordura;
-
-  // Massa esquelética ou massa muscular (em kg)
   double? massaEsqueletica;
-
-  // Índice de Massa Corporal (IMC)
   double? imc;
-
-  // Circunferência Muscular do Braço (CMB)
   double? cmb;
-
-  // Relação Cintura–Quadril (RCQ)
   double? relacaoCinturaQuadril;
+  
+  String? classMassaCorporal;
+  String? classMassaGordura;
+  String? classPercentualGordura;
+  String? classMassaEsqueletica;
+  String? classImc;
+  String? classCmb;
+  String? classRcq;
 
-  // Construtor da classe
-  // Todos os parâmetros são opcionais, permitindo criar o objeto mesmo que nem todos os dados estejam disponíveis
+  String? observacoes;
+  DateTime? data;
+
   Antropometria({
+    this.id_avaliacao,
     this.massaCorporal,
     this.massaGordura,
     this.percentualGordura,
@@ -31,11 +30,21 @@ class Antropometria {
     this.imc,
     this.cmb,
     this.relacaoCinturaQuadril,
+    this.classMassaCorporal,
+    this.classMassaGordura,
+    this.classPercentualGordura,
+    this.classMassaEsqueletica,
+    this.classImc,
+    this.classCmb,
+    this.classRcq,
+    
+    this.observacoes,
+    this.data,
   });
 
-  // Converte o objeto Antropometria em um Map
   Map<String, dynamic> toMap() {
     return {
+      'id_avaliacao': id_avaliacao,
       'massaCorporal': massaCorporal,
       'massaGordura': massaGordura,
       'percentualGordura': percentualGordura,
@@ -43,13 +52,22 @@ class Antropometria {
       'imc': imc,
       'cmb': cmb,
       'relacaoCinturaQuadril': relacaoCinturaQuadril,
+      'classMassaCorporal': classMassaCorporal,
+      'classMassaGordura': classMassaGordura,
+      'classPercentualGordura': classPercentualGordura,
+      'classMassaEsqueletica': classMassaEsqueletica,
+      'classImc': classImc,
+      'classCmb': classCmb,
+      'classRcq': classRcq,
+
+      'observacoes': observacoes,
+      'data': data?.toIso8601String(),
     };
   }
 
-  // Construtor factory que cria um objeto Antropometria a partir de um Map<String, dynamic>
   factory Antropometria.fromMap(Map<String, dynamic> map) {
     return Antropometria(
-      // O toDouble() padroniza o tipo para double
+      id_avaliacao: map['id_avaliacao'],
       massaCorporal: (map['massaCorporal'] as num?)?.toDouble(),
       massaGordura: (map['massaGordura'] as num?)?.toDouble(),
       percentualGordura: (map['percentualGordura'] as num?)?.toDouble(),
@@ -57,6 +75,16 @@ class Antropometria {
       imc: (map['imc'] as num?)?.toDouble(),
       cmb: (map['cmb'] as num?)?.toDouble(),
       relacaoCinturaQuadril: (map['relacaoCinturaQuadril'] as num?)?.toDouble(),
+      classMassaCorporal: map['classMassaCorporal'],
+      classMassaGordura: map['classMassaGordura'],
+      classPercentualGordura: map['classPercentualGordura'],
+      classMassaEsqueletica: map['classMassaEsqueletica'],
+      classImc: map['classImc'],
+      classCmb: map['classCmb'],
+      classRcq: map['classRcq'],
+
+      observacoes: map['observacoes'] as String?,
+      data: map['data'] != null ? DateTime.parse(map['data']) : null,
     );
   }
 }
