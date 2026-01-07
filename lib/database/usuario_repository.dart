@@ -12,6 +12,17 @@ class UsuarioRepository {
   Future<Usuario?> login(String email, String senha) async {
     final db = await DB.get();
 
+    // 3. Busca na tabela base de usuarios (caso ainda não tenha evoluído)
+    final List<Map<String, dynamic>> resUsuario = await db.query(
+      'usuarios',
+      where: 'email = ? AND senha = ?',
+      whereArgs: [email, senha],
+    );
+    if (resUsuario.isNotEmpty) {
+      // Retorna o usuário base caso encontrado
+      return Usuario.fromMap(resUsuario.first);
+    }
+
     // 1. Busca na tabela de nutricionistas
     final List<Map<String, dynamic>> resNutri = await db.query(
       'nutricionistas',
@@ -32,17 +43,6 @@ class UsuarioRepository {
     if (resPaciente.isNotEmpty) {
       // Retorna o paciente caso encontrado
       return Paciente.fromMap(resPaciente.first);
-    }
-
-    // 3. Busca na tabela base de usuarios (caso ainda não tenha evoluído)
-    final List<Map<String, dynamic>> resUsuario = await db.query(
-      'usuarios',
-      where: 'email = ? AND senha = ?',
-      whereArgs: [email, senha],
-    );
-    if (resUsuario.isNotEmpty) {
-      // Retorna o usuário base caso encontrado
-      return Usuario.fromMap(resUsuario.first);
     }
 
     // Caso não seja encontrado em nenhuma das tabelas, retorna null

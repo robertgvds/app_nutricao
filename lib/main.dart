@@ -2,22 +2,38 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
 
 import 'package:app/telas/LoginScreen.dart';
 import 'database/testeDB/teste_db.dart';
 import 'telas/antropometria_edicao_page.dart';
 import 'telas/antropometria_visualizacao_page.dart';
 
-void main() {
+import 'services/auth_service.dart';
+import 'widgets/auth_check.dart';
+
+void main() async {
   // 1. Garante que o Flutter carregue os plugins antes de iniciar
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  // ATIVA O CACHE LOCAL (Torna o app instantâneo)
+  FirebaseDatabase.instance.setPersistenceEnabled(true);
 
   // 2. Inicializa o driver para Windows/Linux/macOS
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  runApp(const MyApp());
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AuthService(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class HomePage extends StatelessWidget {
@@ -114,10 +130,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ----------------------------------------------------
-// 2. Widget Raiz (MyApp) 
-// ----------------------------------------------------
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -130,7 +142,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple, // Adicionei um tema básico roxo
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const AuthCheck(),
     );
   }
 }
