@@ -1,68 +1,14 @@
-import 'package:app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import './antropometria_visualizacao_page.dart';
-import './app_colors.dart';
-import 'plano_alimentar_screen.dart';
-import '../classes/antropometria.dart';
-import '../database/antropometria_repository.dart';
-import '../database/paciente_repository.dart';
-import '../classes/paciente.dart';
-import '../classes/refeicao.dart';
+import 'package:app/services/auth_service.dart';
+import 'paciente_antropometria_screen.dart';
+import 'paciente_planoalimentar_screen.dart';
+import '../../classes/antropometria.dart';
+import '../../database/antropometria_repository.dart';
+import '../../database/paciente_repository.dart';
+import '../../classes/paciente.dart';
+import '../../classes/refeicao.dart';
 
-class PacientHomeScreen extends StatefulWidget {
-  const PacientHomeScreen({super.key});
-
-  @override
-  State<PacientHomeScreen> createState() => _PacientHomeScreenState();
-}
-
-class _PacientHomeScreenState extends State<PacientHomeScreen> {
-  int currentPageIndex = 0;
-
-  // Lista das telas separadas
-  final List<Widget> _screens = const [
-    HomeTabScreen(pacienteId: 1), // Index 0
-    AntropometriaVisualizacaoPage(pacienteId: 1), // Index 1
-    PlanoAlimentarScreen(), // Index 2
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        }, // Certifique-se de importar AppColors
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home, color: AppColors.laranja),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(
-              Icons.accessibility_new_rounded,
-              color: AppColors.roxo,
-            ),
-            icon: Icon(Icons.accessibility_new_outlined),
-            label: 'Antropometria',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.restaurant_menu, color: AppColors.verde),
-            icon: Icon(Icons.restaurant_menu_outlined),
-            label: 'Plano Alimentar',
-          ),
-        ],
-      ),
-      // Aqui o body muda dinamicamente com base na lista criada acima
-      body: _screens[currentPageIndex],
-    );
-  }
-}
 
 class HomeTabScreen extends StatefulWidget {
   final int pacienteId;
@@ -137,12 +83,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.settings, color: Colors.black),
+            icon: const Icon(Icons.logout, color: Colors.black54),
+            onPressed: () {
+              Provider.of<AuthService>(context, listen: false).logout();
+            },
           ),
         ],
       ),
@@ -412,7 +356,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const PlanoAlimentarScreen(),
+                  builder: (context) => const PacientePlanoAlimentarScreen(),
                 ),
               );
             },

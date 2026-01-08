@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../screens/login_screen.dart'; 
-import '../screens/pacient_home_screen.dart';  
-import '../screens/nutri_home_screen.dart'; // Crie ou importe esta tela
-import '../screens/verification_screen.dart';
+import '../screens/general/login_screen.dart'; 
+import '../screens/paciente/paciente_home_screen.dart';  
+import '../screens/nutricionista/nutricionista_home_screen.dart'; // Crie ou importe esta tela
+import '../screens/general/verification_screen.dart';
 
 class AuthCheck extends StatelessWidget {
   const AuthCheck({super.key});
@@ -45,9 +45,9 @@ class AuthCheck extends StatelessWidget {
       final tipo = dados['tipo']; // 'paciente' ou 'nutricionista'
 
       if (tipo == 'paciente') {
-        return const PacientHomeScreen();
+        return const PacienteHomeScreen();
       } else if (tipo == 'nutricionista') {
-        return const NutriHomeScreen(); 
+        return const NutricionistaNavigation(); 
       } else {
         // Caso raro: Logado, mas sem tipo definido ou tipo desconhecido
         return Scaffold(

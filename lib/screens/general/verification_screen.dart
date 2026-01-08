@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
-import '../widgets/auth_check.dart'; 
-import 'app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../widgets/auth_check.dart'; 
+import '../../widgets/app_colors.dart';
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});

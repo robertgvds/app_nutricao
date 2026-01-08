@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 
-import 'package:app/screens/login_screen.dart';
+import 'package:app/screens/general/login_screen.dart';
 import '../database/testeDB/teste_db.dart';
-import './antropometria_edicao_page.dart';
-import './antropometria_visualizacao_page.dart';
+import 'nutricionista/nutricionista_antropometria_screen.dart';
+import 'paciente/paciente_antropometria_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -91,7 +91,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AntropometriaEdicaoPage(
+                      builder: (context) => NutricionistaAntropometriaScreen(
                         pacienteId: idPacienteTeste,
                       ),
                     ),

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../classes/antropometria.dart';
-import '../database/antropometria_repository.dart';
-import 'app_colors.dart';
+import '../../classes/antropometria.dart';
+import '../../database/antropometria_repository.dart';
+import '../../widgets/app_colors.dart';
 
-class AntropometriaEdicaoPage extends StatefulWidget {
+class NutricionistaAntropometriaScreen extends StatefulWidget {
   final int pacienteId;
 
-  const AntropometriaEdicaoPage({
+  const NutricionistaAntropometriaScreen({
     Key? key,
     required this.pacienteId,
   }) : super(key: key);
 
   @override
-  State<AntropometriaEdicaoPage> createState() =>
-      _AntropometriaEdicaoPageState();
+  State<NutricionistaAntropometriaScreen> createState() =>
+      _NutricionistaAntropometriaScreenState();
 }
 
-class _AntropometriaEdicaoPageState extends State<AntropometriaEdicaoPage> {
+class _NutricionistaAntropometriaScreenState extends State<NutricionistaAntropometriaScreen> {
   final _formKey = GlobalKey<FormState>();
   final _repository = AntropometriaRepository();
 

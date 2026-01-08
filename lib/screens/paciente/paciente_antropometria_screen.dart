@@ -3,9 +3,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../classes/antropometria.dart';
-import '../database/antropometria_repository.dart';
-import 'app_colors.dart';
+import '../../classes/antropometria.dart';
+import '../../database/antropometria_repository.dart';
+import '../../widgets/app_colors.dart';
 
 class AntropometriaVisualizacaoPage extends StatefulWidget {
   final int pacienteId;

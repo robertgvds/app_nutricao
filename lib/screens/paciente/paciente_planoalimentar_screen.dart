@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PlanoAlimentarScreen extends StatelessWidget {
-  const PlanoAlimentarScreen({super.key});
+class PacientePlanoAlimentarScreen extends StatelessWidget {
+  const PacientePlanoAlimentarScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
