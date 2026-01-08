@@ -19,7 +19,7 @@ class AntropometriaVisualizacaoPage extends StatefulWidget {
 }
 
 class _AntropometriaVisualizacaoPageState
-    extends State<AntropometriaVisualizacaoPage> {
+  extends State<AntropometriaVisualizacaoPage> {
   final _repository = AntropometriaRepository();
 
   Antropometria? _ultimaAvaliacao;

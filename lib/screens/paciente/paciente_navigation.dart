@@ -21,6 +21,24 @@ class _PacienteNavigationState extends State<PacienteNavigation> {
     PacientePlanoAlimentarScreen(), // Index 2
   ];
 
+  Color _getBackgroundColor(int index) {
+    return switch (index) {
+      0 => AppColors.laranja,
+      1 => AppColors.roxo,
+      2 => AppColors.verde,
+      _ => Colors.white,
+    };
+  }
+
+  Color _getForegroundColor(int index) {
+    return switch (index) {
+      0 => AppColors.laranjaClaro,
+      1 => AppColors.roxoClaro,
+      2 => AppColors.verdeClaro,
+      _ => Colors.black,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,22 +49,24 @@ class _PacienteNavigationState extends State<PacienteNavigation> {
           });
         }, // Certifique-se de importar AppColors
         selectedIndex: widget.currentPageIndex,
+        backgroundColor: Colors.white,
+        indicatorColor: _getForegroundColor(widget.currentPageIndex),
+        surfaceTintColor: _getForegroundColor(widget.currentPageIndex),
         destinations: const <Widget>[
           NavigationDestination(
-            selectedIcon: Icon(Icons.home, color: AppColors.laranja),
+            selectedIcon: Icon(Icons.home),
             icon: Icon(Icons.home_outlined),
             label: 'Home',
           ),
           NavigationDestination(
             selectedIcon: Icon(
               Icons.accessibility_new_rounded,
-              color: AppColors.roxo,
             ),
             icon: Icon(Icons.accessibility_new_outlined),
             label: 'Antropometria',
           ),
           NavigationDestination(
-            selectedIcon: Icon(Icons.restaurant_menu, color: AppColors.verde),
+            selectedIcon: Icon(Icons.restaurant_menu),
             icon: Icon(Icons.restaurant_menu_outlined),
             label: 'Plano Alimentar',
           ),

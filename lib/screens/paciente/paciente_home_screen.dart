@@ -1,15 +1,13 @@
 import 'package:app/screens/paciente/paciente_navigation.dart';
+import 'package:app/widgets/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/services/auth_service.dart';
-import 'paciente_antropometria_screen.dart';
-import 'paciente_planoalimentar_screen.dart';
 import '../../classes/antropometria.dart';
 import '../../database/antropometria_repository.dart';
 import '../../database/paciente_repository.dart';
 import '../../classes/paciente.dart';
 import '../../classes/refeicao.dart';
-
 
 class HomeTabScreen extends StatefulWidget {
   final int pacienteId;
@@ -74,45 +72,71 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.laranja,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.laranja,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(backgroundImage: NetworkImage('url_da_foto')),
+        title: const Text(
+          'Mango Nutri',
+          style: TextStyle(color: Colors.white),
         ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black54),
-            onPressed: () {
-              Provider.of<AuthService>(context, listen: false).logout();
-            },
+            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            onPressed: () => context.read<AuthService>().logout(),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            SizedBox(height: 20),
-            if (_paciente?.nutricionistaCrn == null ||
-                _paciente!.nutricionistaCrn!.isEmpty) ...[
-              const SizedBox(height: 20),
-              _buildBuscaNutricionistaSection(),
-              /* ] else ...[ */
-              const SizedBox(height: 20),
-              _buildNutricionistaCard(),
-            ],
-            _buildProximaRefeicao(),
-            SizedBox(height: 25),
-            _buildAvaliacaoFisica(),
-            SizedBox(height: 100),
-          ],
-        ),
-      ),
+      // 1. Alterado para CustomScrollView
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              )
+              : CustomScrollView(
+                slivers: [
+                  // 3. A parte branca usa SliverFillRemaining para ocupar todo o espaço restante
+                  SliverFillRemaining(
+                    hasScrollBody:
+                        false, // Importante: Permite que o container estique ou role conforme necessário
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          _buildHeader(),
+                          SizedBox(height: 20),
+                          if (_paciente?.nutricionistaCrn == null ||
+                              _paciente!.nutricionistaCrn!.isEmpty) ...[
+                            const SizedBox(height: 20),
+                            _buildBuscaNutricionistaSection(),
+                            /* ] else ...[ */
+                            const SizedBox(height: 20),
+                            _buildNutricionistaCard(),
+                          ],
+                          _buildProximaRefeicao(),
+                          SizedBox(height: 25),
+                          _buildAvaliacaoFisica(),
+                          SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
     );
   }
 
@@ -512,8 +536,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => PacienteNavigation(currentPageIndex: 1),
+                  builder: (context) => PacienteNavigation(currentPageIndex: 1),
                 ),
               );
             },
