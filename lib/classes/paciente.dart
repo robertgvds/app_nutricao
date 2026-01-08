@@ -155,4 +155,27 @@ class Paciente extends Usuario {
 
     return map;
   }
+
+  int get idade {
+    if (dataNascimento.isEmpty) return 0;
+
+    try {
+      // Tenta converter a String do banco para DateTime
+      DateTime nascimento = DateTime.parse(dataNascimento);
+      DateTime hoje = DateTime.now();
+
+      int idade = hoje.year - nascimento.year;
+
+      // Ajuste caso ainda não tenha chegado o dia/mês do aniversário
+      if (hoje.month < nascimento.month ||
+          (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
+        idade--;
+      }
+
+      return idade;
+    } catch (e) {
+      print("Erro ao calcular idade: $e");
+      return 0;
+    }
+  }
 }
