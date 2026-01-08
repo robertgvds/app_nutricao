@@ -1,3 +1,4 @@
+import 'package:app/screens/paciente/paciente_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/services/auth_service.dart';
@@ -356,7 +357,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const PacientePlanoAlimentarScreen(),
+                  builder: (context) => PacienteNavigation(currentPageIndex: 2),
                 ),
               );
             },
@@ -512,9 +513,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 context,
                 MaterialPageRoute(
                   builder:
-                      (context) => AntropometriaVisualizacaoPage(
-                        pacienteId: widget.pacienteId,
-                      ),
+                      (context) => PacienteNavigation(currentPageIndex: 1),
                 ),
               );
             },

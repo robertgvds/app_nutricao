@@ -5,16 +5,15 @@ import 'paciente_antropometria_screen.dart';
 import 'paciente_home_screen.dart';
 import 'paciente_planoalimentar_screen.dart';
 
-class PacienteHomeScreen extends StatefulWidget {
-  const PacienteHomeScreen({super.key});
+class PacienteNavigation extends StatefulWidget {
+  int currentPageIndex = 0;
+  PacienteNavigation({super.key, this.currentPageIndex = 0});
 
   @override
-  State<PacienteHomeScreen> createState() => _PacienteHomeScreenState();
+  State<PacienteNavigation> createState() => _PacienteNavigationState();
 }
 
-class _PacienteHomeScreenState extends State<PacienteHomeScreen> {
-  int currentPageIndex = 0;
-
+class _PacienteNavigationState extends State<PacienteNavigation> {
   // Lista das telas separadas
   final List<Widget> _screens = const [
     HomeTabScreen(pacienteId: 1), // Index 0
@@ -28,10 +27,10 @@ class _PacienteHomeScreenState extends State<PacienteHomeScreen> {
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
-            currentPageIndex = index;
+            widget.currentPageIndex = index;
           });
         }, // Certifique-se de importar AppColors
-        selectedIndex: currentPageIndex,
+        selectedIndex: widget.currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
             selectedIcon: Icon(Icons.home, color: AppColors.laranja),
@@ -54,7 +53,7 @@ class _PacienteHomeScreenState extends State<PacienteHomeScreen> {
         ],
       ),
       // Aqui o body muda dinamicamente com base na lista criada acima
-      body: _screens[currentPageIndex],
+      body: _screens[widget.currentPageIndex],
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'package:app/screens/nutricionista/nutricionista_navigation.dart';
+import 'package:app/screens/paciente/paciente_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
@@ -45,9 +47,9 @@ class AuthCheck extends StatelessWidget {
       final tipo = dados['tipo']; // 'paciente' ou 'nutricionista'
 
       if (tipo == 'paciente') {
-        return const PacienteHomeScreen();
+        return PacienteNavigation();
       } else if (tipo == 'nutricionista') {
-        return const NutricionistaNavigation(); 
+        return NutricionistaNavigation(); 
       } else {
         // Caso raro: Logado, mas sem tipo definido ou tipo desconhecido
         return Scaffold(
