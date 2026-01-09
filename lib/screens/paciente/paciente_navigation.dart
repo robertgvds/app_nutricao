@@ -1,25 +1,28 @@
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart'; 
 import '../../widgets/app_colors.dart';
 import 'paciente_antropometria_screen.dart';
 import 'paciente_home_screen.dart';
 import 'paciente_planoalimentar_screen.dart';
 
 class PacienteNavigation extends StatefulWidget {
-  int currentPageIndex = 0;
-  PacienteNavigation({super.key, this.currentPageIndex = 0});
+  final int currentPageIndex; 
+  
+  const PacienteNavigation({super.key, this.currentPageIndex = 0});
 
   @override
   State<PacienteNavigation> createState() => _PacienteNavigationState();
 }
 
 class _PacienteNavigationState extends State<PacienteNavigation> {
-  // Lista das telas separadas
-  final List<Widget> _screens = const [
-    HomeTabScreen(pacienteId: 1), // Index 0
-    AntropometriaVisualizacaoPage(pacienteId: 1), // Index 1
-    PacientePlanoAlimentarScreen(), // Index 2
-  ];
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.currentPageIndex;
+  }
 
   Color _getBackgroundColor(int index) {
     return switch (index) {
@@ -41,17 +44,28 @@ class _PacienteNavigationState extends State<PacienteNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Obtém o ID do usuário logado (String)
+    final authService = context.watch<AuthService>();
+    final String uidUsuario = authService.usuario?.uid ?? '';
+
+    // 2. Cria a lista de telas passando o ID correto (String)
+    final List<Widget> screens = [
+      HomeTabScreen(pacienteId: uidUsuario),           // Index 0
+      AntropometriaVisualizacaoPage(pacienteId: uidUsuario), // Index 1
+      const PacientePlanoAlimentarScreen(),            // Index 2
+    ];
+
     return Scaffold(
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
-            widget.currentPageIndex = index;
+            _currentIndex = index;
           });
-        }, // Certifique-se de importar AppColors
-        selectedIndex: widget.currentPageIndex,
+        },
+        selectedIndex: _currentIndex,
         backgroundColor: Colors.white,
-        indicatorColor: _getForegroundColor(widget.currentPageIndex),
-        surfaceTintColor: _getForegroundColor(widget.currentPageIndex),
+        indicatorColor: _getForegroundColor(_currentIndex),
+        surfaceTintColor: _getForegroundColor(_currentIndex),
         destinations: const <Widget>[
           NavigationDestination(
             selectedIcon: Icon(Icons.home),
@@ -59,9 +73,7 @@ class _PacienteNavigationState extends State<PacienteNavigation> {
             label: 'Home',
           ),
           NavigationDestination(
-            selectedIcon: Icon(
-              Icons.accessibility_new_rounded,
-            ),
+            selectedIcon: Icon(Icons.accessibility_new_rounded),
             icon: Icon(Icons.accessibility_new_outlined),
             label: 'Antropometria',
           ),
@@ -72,8 +84,8 @@ class _PacienteNavigationState extends State<PacienteNavigation> {
           ),
         ],
       ),
-      // Aqui o body muda dinamicamente com base na lista criada acima
-      body: _screens[widget.currentPageIndex],
+      // Exibe a tela correspondente ao índice atual
+      body: screens[_currentIndex],
     );
   }
 }

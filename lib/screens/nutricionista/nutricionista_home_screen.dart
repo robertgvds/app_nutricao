@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/database/testeDB/teste_db.dart';
+// REMOVIDO: import 'package:app/database/testeDB/teste_db.dart';
 import 'package:app/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';

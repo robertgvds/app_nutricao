@@ -28,7 +28,7 @@ class _NutricionistaNavigationState extends State<NutricionistaNavigation> {
           setState(() {
             currentPageIndex = index;
           });
-        }, // Certifique-se de importar AppColors
+        }, 
         selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
@@ -46,7 +46,7 @@ class _NutricionistaNavigationState extends State<NutricionistaNavigation> {
           ),
         ],
       ),
-      // Aqui o body muda dinamicamente com base na lista criada acima
+
       body: _screens[currentPageIndex],
     );
   }

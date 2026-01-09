@@ -1,61 +1,61 @@
+import 'package:firebase_database/firebase_database.dart';
 import '../classes/antropometria.dart';
 
 class AntropometriaRepository {
-  
-  // Banco de dados em memória:
-  // Chave = ID do Paciente
-  // Valor = Lista de avaliações dele
-  static final Map<int, List<Antropometria>> _bancoDeDados = {};
+  final FirebaseDatabase _db = FirebaseDatabase.instance;
 
-  Future<void> salvarAvaliacao(int pacienteId, Antropometria dados) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    // Se o paciente ainda não tem histórico, cria a lista
-    if (!_bancoDeDados.containsKey(pacienteId)) {
-      _bancoDeDados[pacienteId] = [];
-    }
-
-    final listaDoPaciente = _bancoDeDados[pacienteId]!;
-
-    // --- LÓGICA DE EDIÇÃO VS CRIAÇÃO ---
-    
-    if (dados.id_avaliacao != null) {
-      // CENÁRIO 1: EDIÇÃO (Já tem ID da avaliação)
-      // Procura na lista qual item tem esse mesmo ID
-      final index = listaDoPaciente.indexWhere((item) => item.id_avaliacao == dados.id_avaliacao);
-      
-      if (index != -1) {
-        // Encontrou! Substitui o antigo pelo novo (editado)
-        listaDoPaciente[index] = dados;
-        print("Avaliação ${dados.id_avaliacao} ATUALIZADA com sucesso.");
-      } else {
-        // (Segurança) Se tiver ID mas não achar, adiciona.
-        listaDoPaciente.add(dados);
+  // Salva ou Atualiza uma avaliação
+  Future<void> salvarAvaliacao(String pacienteUid, Antropometria dados) async {
+    try {
+      // Se não tiver ID, gera um novo via timestamp
+      if (dados.id_avaliacao == null || dados.id_avaliacao!.isEmpty) {
+        dados.id_avaliacao = DateTime.now().millisecondsSinceEpoch.toString();
       }
 
-    } else {
-      // CENÁRIO 2: NOVA AVALIAÇÃO (ID é nulo)
-      // Gera um ID único baseado no tempo atual (timestamp)
-      dados.id_avaliacao = DateTime.now().millisecondsSinceEpoch.toString();
+      // Caminho: antropometria -> UID do Paciente -> ID da Avaliação
+      DatabaseReference ref = _db.ref('antropometria/$pacienteUid/${dados.id_avaliacao}');
       
-      listaDoPaciente.add(dados);
-      print("Nova avaliação CRIADA com ID: ${dados.id_avaliacao}");
+      await ref.set(dados.toMap());
+      print("Avaliação ${dados.id_avaliacao} salva para o paciente $pacienteUid.");
+      
+    } catch (e) {
+      print("Erro ao salvar avaliação: $e");
+      rethrow;
     }
   }
 
-  Future<List<Antropometria>> buscarHistorico(int pacienteId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    // Retorna a lista ou uma lista vazia se não tiver nada
-    return _bancoDeDados[pacienteId] ?? []; 
+  // Busca histórico do Firebase
+  Future<List<Antropometria>> buscarHistorico(String pacienteUid) async {
+    try {
+      DatabaseReference ref = _db.ref('antropometria/$pacienteUid');
+      final snapshot = await ref.get();
+
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        
+        List<Antropometria> lista = [];
+        data.forEach((key, value) {
+          if (value is Map) {
+            final mapConvertido = Map<String, dynamic>.from(value as Map);
+            lista.add(Antropometria.fromMap(mapConvertido));
+          }
+        });
+        
+        // Ordena por data (mais recente primeiro)
+        lista.sort((a, b) => (b.data ?? DateTime(2000)).compareTo(a.data ?? DateTime(2000)));
+        return lista;
+      }
+      return [];
+    } catch (e) {
+      print("Erro ao buscar histórico: $e");
+      return [];
+    }
   }
 
-  Future<Antropometria?> buscarUltimaAvaliacao(int pacienteId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final lista = _bancoDeDados[pacienteId];
-    if (lista != null && lista.isNotEmpty) {
-      // Ordena para garantir que pega a mais recente por data
-      lista.sort((a, b) => (a.data ?? DateTime(2000)).compareTo(b.data ?? DateTime(2000)));
-      return lista.last;
+  Future<Antropometria?> buscarUltimaAvaliacao(String pacienteUid) async {
+    final lista = await buscarHistorico(pacienteUid);
+    if (lista.isNotEmpty) {
+      return lista.first;
     }
     return null;
   }
