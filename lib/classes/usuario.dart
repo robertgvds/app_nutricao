@@ -1,5 +1,6 @@
+// Classe base para todos os usuários do sistema
 class Usuario {
-  String? id; // MUDADO DE int PARA String (Firebase UID)
+  String? id; // ALTERADO: De int? para String? (Firebase UID)
   String nome;
   String email;
   String senha;
@@ -28,7 +29,7 @@ class Usuario {
 
   factory Usuario.fromMap(Map<String, dynamic> map) {
     return Usuario(
-      id: map['id']?.toString(), // Garante conversão para String
+      id: map['id']?.toString(), // Garante conversão segura
       nome: map['nome'] ?? '',
       email: map['email'] ?? '',
       senha: map['senha'] ?? '',

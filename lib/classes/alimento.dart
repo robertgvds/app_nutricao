@@ -1,14 +1,13 @@
-// Classe que representa um alimento
 class Alimento {
   final String id;
   final String nome;
-  final String categoria; // Ex: 'TACO', 'Personalizado'
+  final String categoria;
   final double calorias;
   final double proteinas;
   final double carboidratos;
   final double gorduras;
-  double quantidade; // Em gramas ou unidade
-  String unidade; // 'g', 'ml', 'unidade'
+  double quantidade; // Em gramas
+  String unidade;
 
   Alimento({
     required this.id,
@@ -22,39 +21,40 @@ class Alimento {
     this.unidade = 'g',
   });
 
-  // Getters para calcular totais baseados na quantidade
   double get totalCalorias => (calorias * quantidade) / 100;
   double get totalProteinas => (proteinas * quantidade) / 100;
   double get totalCarboidratos => (carboidratos * quantidade) / 100;
   double get totalGorduras => (gorduras * quantidade) / 100;
 
-  // Converte o objeto Alimento em um Map Útil para salvar em banco de dados
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'nome': nome,
+      'categoria': categoria,
       'calorias': calorias,
       'proteinas': proteinas,
       'carboidratos': carboidratos,
-      'categoria': categoria,
       'gorduras': gorduras,
       'quantidade': quantidade,
       'unidade': unidade,
     };
   }
 
-  // Construtor factory que cria um objeto Alimento a partir de um Map (ex: dados vindos do banco ou JSON)
+  // CORREÇÃO AQUI: Usamos (valor as num?)?.toDouble() para aceitar tanto int quanto double
   factory Alimento.fromMap(Map<String, dynamic> map) {
     return Alimento(
-      id: map['id'] ?? '',
-      nome: map['nome'] ?? '',
-      calorias: map['calorias'] ?? 0,
-      proteinas: map['proteinas'] ?? 0,
-      carboidratos: map['carboidratos'] ?? 0,
-      categoria: map['categoria'] ?? 'Geral',
-      gorduras: map['gorduras'] ?? 0,
-      quantidade: map['quantidade'] ?? 0,
-      unidade: map['unidade'] ?? 'g',
+      id: map['id']?.toString() ?? '',
+      nome: map['nome']?.toString() ?? '',
+      categoria: map['categoria']?.toString() ?? 'Geral',
+      
+      // O 'num' é o pai de 'int' e 'double', então aceita ambos e converte
+      calorias: (map['calorias'] as num?)?.toDouble() ?? 0.0,
+      proteinas: (map['proteinas'] as num?)?.toDouble() ?? 0.0,
+      carboidratos: (map['carboidratos'] as num?)?.toDouble() ?? 0.0,
+      gorduras: (map['gorduras'] as num?)?.toDouble() ?? 0.0,
+      
+      quantidade: (map['quantidade'] as num?)?.toDouble() ?? 100.0,
+      unidade: map['unidade']?.toString() ?? 'g',
     );
   }
 }
