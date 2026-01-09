@@ -128,15 +128,16 @@ class _NutricionistaHistoricoPlanosScreenState
                                     final isAtual = index == 0;
 
                                     return Card(
-                                      elevation: isAtual ? 4 : 2,
+                                      elevation: isAtual ? 2 : 1,
+                                      color: AppColors.branco,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(20),
+                                              BorderRadius.circular(25),
                                           side: isAtual
                                               ? const BorderSide(
                                                   color: AppColors.verde,
                                                   width: 2)
-                                              : BorderSide.none),
+                                              : BorderSide(color: AppColors.cinzaClaro, width: 1)),
                                       margin:
                                           const EdgeInsets.only(bottom: 12),
                                       child: ListTile(
@@ -216,7 +217,7 @@ class _NutricionistaHistoricoPlanosScreenState
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16)),
-                                elevation: 3,
+                                elevation: 1,
                               ),
                             ),
                           ),

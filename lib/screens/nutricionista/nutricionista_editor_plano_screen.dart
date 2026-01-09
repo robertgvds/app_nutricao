@@ -183,7 +183,7 @@ class _NutricionistaEditorPlanoScreenState
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 15),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: _isSaving
               ? const SizedBox(
@@ -259,9 +259,12 @@ class _NutricionistaEditorPlanoScreenState
                       .map((ref) => Card(
                             margin: const EdgeInsets.only(bottom: 16),
                             color: Colors.white,
-                            elevation: 3,
+                            elevation: 1,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20)),
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(color: AppColors.cinzaClaro, width: 1),
+                            ),
+                            
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
                               child: Column(
@@ -304,9 +307,7 @@ class _NutricionistaEditorPlanoScreenState
                                       style: TextButton.styleFrom(
                                         backgroundColor: AppColors.verde,
                                         foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(13)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                         minimumSize: const Size(400, 40),
                                       )),
                                 ],
@@ -628,6 +629,8 @@ class _CriarAlimentoScreenState extends State<_CriarAlimentoScreen> {
                           backgroundColor: AppColors.verde,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text("ADICIONAR AO PLANO"),
                       ),
