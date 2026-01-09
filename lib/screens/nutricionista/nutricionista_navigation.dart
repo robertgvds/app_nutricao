@@ -7,7 +7,8 @@ class NutricionistaNavigation extends StatefulWidget {
   const NutricionistaNavigation({super.key});
 
   @override
-  State<NutricionistaNavigation> createState() => _NutricionistaNavigationState();
+  State<NutricionistaNavigation> createState() =>
+      _NutricionistaNavigationState();
 }
 
 class _NutricionistaNavigationState extends State<NutricionistaNavigation> {
@@ -15,7 +16,7 @@ class _NutricionistaNavigationState extends State<NutricionistaNavigation> {
 
   // Lista das telas separadas
   final List<Widget> _screens = const [
-    HomeTabScreen(),       // Index 0
+    HomeTabScreen(nutriId: 1), // Index 0
     NutricionistaListaPacientesScreen(), // Index 1
   ];
 
@@ -36,7 +37,10 @@ class _NutricionistaNavigationState extends State<NutricionistaNavigation> {
             label: 'Home',
           ),
           NavigationDestination(
-            selectedIcon: Icon(Icons.accessibility_new_rounded, color: AppColors.roxo),
+            selectedIcon: Icon(
+              Icons.accessibility_new_rounded,
+              color: AppColors.roxo,
+            ),
             icon: Icon(Icons.accessibility_new_outlined),
             label: 'Pacientes',
           ),

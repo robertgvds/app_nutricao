@@ -8,6 +8,8 @@ import '../../database/antropometria_repository.dart';
 import '../../database/paciente_repository.dart';
 import '../../classes/paciente.dart';
 import '../../classes/refeicao.dart';
+import '../../classes/nutricionista.dart';
+import '../../database/nutricionista_repository.dart';
 
 class HomeTabScreen extends StatefulWidget {
   final int pacienteId;
@@ -18,10 +20,13 @@ class HomeTabScreen extends StatefulWidget {
 }
 
 class _HomeTabScreenState extends State<HomeTabScreen> {
+  List<Refeicao> _planoAlimentar = [];
   final _antropometriaRepo = AntropometriaRepository();
   final _pacienteRepo = PacienteRepository();
+  final _nutriRepo = NutricionistaRepository();
   Antropometria? _ultimaAvaliacao;
   Paciente? _paciente;
+  Nutricionista? _nutricionista;
   bool _isLoading = true;
 
   @override
@@ -32,6 +37,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   Future<void> _carregarDadosHome() async {
     try {
+      final _nutriRepo = NutricionistaRepository();
       final resultados = await Future.wait([
         _antropometriaRepo.buscarHistorico(widget.pacienteId),
         _pacienteRepo.buscarPorId(widget.pacienteId),
@@ -39,9 +45,21 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
       final historico = resultados[0] as List<Antropometria>;
       final pacienteEncontrado = resultados[1] as Paciente?;
+      final refeicoesEncontradas = resultados[2] as List<Refeicao>;
+
+      Nutricionista? nutricionistaEncontrado;
+      if (pacienteEncontrado != null &&
+          pacienteEncontrado.nutricionistaCrn != null &&
+          pacienteEncontrado.nutricionistaCrn!.isNotEmpty) {
+        nutricionistaEncontrado = await _nutriRepo.buscarPorCRN(
+          pacienteEncontrado.nutricionistaCrn!,
+        );
+      }
 
       setState(() {
         _paciente = pacienteEncontrado;
+        _nutricionista = nutricionistaEncontrado;
+        _planoAlimentar = refeicoesEncontradas;
 
         if (historico.isNotEmpty) {
           historico.sort(
@@ -51,7 +69,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           _ultimaAvaliacao = historico.last;
         }
 
-        _isLoading = false; // Só encerra o loading aqui
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint("Erro ao carregar dados: $e");
@@ -76,10 +94,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.laranja,
         elevation: 0,
-        title: const Text(
-          'Mango Nutri',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Mango Nutri', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         actions: [
           IconButton(
@@ -88,7 +103,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
         ],
       ),
-      // 1. Alterado para CustomScrollView
       body:
           _isLoading
               ? const Center(
@@ -96,10 +110,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               )
               : CustomScrollView(
                 slivers: [
-                  // 3. A parte branca usa SliverFillRemaining para ocupar todo o espaço restante
                   SliverFillRemaining(
-                    hasScrollBody:
-                        false, // Importante: Permite que o container estique ou role conforme necessário
+                    hasScrollBody: false,
                     child: Container(
                       width: double.infinity,
                       decoration: const BoxDecoration(
@@ -123,7 +135,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                               _paciente!.nutricionistaCrn!.isEmpty) ...[
                             const SizedBox(height: 20),
                             _buildBuscaNutricionistaSection(),
-                            /* ] else ...[ */
+                          ] else ...[
                             const SizedBox(height: 20),
                             _buildNutricionistaCard(),
                           ],
@@ -190,9 +202,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () {
-              // Lógica para navegar para tela de busca
-            },
+            onPressed: () {},
             icon: const Icon(Icons.search, color: Colors.orange, size: 20),
             label: const Text(
               "Buscar um nutricionista",
@@ -224,17 +234,16 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       child: Column(
         children: [
           ListTile(
-            leading: CircleAvatar(radius: 25),
             title: Text(
-              "Nome Nutricionista",
+              _nutricionista?.nome ?? "Nome Nutricionista",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               "Última avaliação em ${_ultimaAvaliacao?.data ?? '--'}",
             ),
-            trailing: Icon(Icons.add_circle_outline),
+            /* trailing: Icon(Icons.add_circle_outline), */
           ),
-          Row(
+          /* Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
@@ -247,64 +256,60 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
               ),
             ],
-          ),
+          ), */
         ],
       ),
     );
   }
 
   Widget _buildProximaRefeicao() {
+    if (_planoAlimentar.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Text(
+          'Nenhuma refeição cadastrada.',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 0, 0, 0),
+          ),
+        ),
+      );
+    }
+    final proxima = _planoAlimentar.first;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
-          // Linha divisória inferior
           const Divider(color: Colors.black12, thickness: 1),
-          // Cabeçalho da Seção
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Próxima Refeição',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4CAF50),
-                ),
-              ),
-            ],
+          const Text(
+            'Próxima Refeição',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF4CAF50),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /* const Padding(
-                padding: EdgeInsets.only(top: 4.0),
-                child: Text(
-                  "00:00",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ), */
-              /* const SizedBox(width: 12), */
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0), // Cinza claro do fundo
+                    color: const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Nome da Refeição",
-                        style: TextStyle(
+                      Text(
+                        proxima.nome,
+                        style: const TextStyle(
                           color: Color(0xFF4CAF50),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -312,7 +317,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Box Branco com os itens
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -322,39 +326,22 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildItemLinha("TextTextTextText"),
-                            _buildItemLinha("TextTextTextText"),
-                            _buildItemLinha("TextTextTextText"),
-                          ],
+                          children:
+                              proxima.alimentos.map((alimento) {
+                                return _buildItemLinha(
+                                  "${alimento.nome} (${alimento.peso}g)",
+                                );
+                              }).toList(),
                         ),
                       ),
                       const SizedBox(height: 12),
 
-                      // Botão Analisar outras opções
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.swap_horiz, size: 18),
-                          label: const Text("Analisar outras opções"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFB2FFB4),
-                            foregroundColor: const Color(0xFF2E7D32),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Botão Concluir refeição
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            // marcar como concluida
+                          },
                           icon: const Icon(Icons.check, size: 18),
                           label: const Text("Concluir refeição"),
                           style: ElevatedButton.styleFrom(
@@ -375,7 +362,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Botão Inferior "Ver Plano Alimentar"
+          // Botão Inferior
           InkWell(
             onTap: () {
               Navigator.push(
@@ -385,9 +372,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
               );
             },
-            borderRadius: BorderRadius.circular(
-              25,
-            ), // Mantém o efeito visual dentro do raio
+            borderRadius: BorderRadius.circular(25),
             child: Container(
               width: double.infinity,
               height: 40,
@@ -449,7 +434,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF916DD5), // Roxo da imagem
+              color: Color(0xFF916DD5),
             ),
           ),
           const SizedBox(height: 12),
@@ -471,14 +456,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     child: Container(
                       height: 100,
                       width: 100,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(
-                            'https://via.placeholder.com/100',
-                          ),
-                          opacity: 0.3,
-                        ),
-                      ),
                       child: const Icon(
                         Icons.shape_line,
                         size: 50,
@@ -488,8 +465,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Conteúdo da Direita
                 Expanded(
                   flex: 1,
                   child: Column(
@@ -574,7 +549,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     );
   }
 
-  // Widget auxiliar para as tags coloridas (Massa Magra/Gorda)
   Widget _buildTagAvaliacao({required String label, required Color color}) {
     return Container(
       width: double.infinity,

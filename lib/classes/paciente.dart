@@ -160,13 +160,23 @@ class Paciente extends Usuario {
     if (dataNascimento.isEmpty) return 0;
 
     try {
-      // Tenta converter a String do banco para DateTime
-      DateTime nascimento = DateTime.parse(dataNascimento);
-      DateTime hoje = DateTime.now();
+      DateTime nascimento;
 
+      if (dataNascimento.contains('/')) {
+        List<String> partes = dataNascimento.split('/');
+
+        nascimento = DateTime(
+          int.parse(partes[2]),
+          int.parse(partes[1]),
+          int.parse(partes[0]),
+        );
+      } else {
+        nascimento = DateTime.parse(dataNascimento);
+      }
+
+      DateTime hoje = DateTime.now();
       int idade = hoje.year - nascimento.year;
 
-      // Ajuste caso ainda não tenha chegado o dia/mês do aniversário
       if (hoje.month < nascimento.month ||
           (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
         idade--;
@@ -174,6 +184,7 @@ class Paciente extends Usuario {
 
       return idade;
     } catch (e) {
+      // Se a data estiver mal formatada no banco, ele cai aqui
       print("Erro ao calcular idade: $e");
       return 0;
     }
