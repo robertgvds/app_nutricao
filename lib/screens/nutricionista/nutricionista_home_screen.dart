@@ -11,15 +11,17 @@ import '../../classes/paciente.dart';
 import '../../database/antropometria_repository.dart';
 import 'nutricionista_antropometria_screen.dart';
 
-class HomeTabScreen extends StatefulWidget {
-  final int nutriId;
-  const HomeTabScreen({super.key, required this.nutriId});
+class NutricionistaHomeScreen extends StatefulWidget {
+  final String nutriId;
+  final Function(int) onMudarAba;
+
+  const NutricionistaHomeScreen({super.key, required this.nutriId, required this.onMudarAba});
 
   @override
-  State<HomeTabScreen> createState() => _HomeTabScreenState();
+  State<NutricionistaHomeScreen> createState() => _NutricionistaHomeScreenState();
 }
 
-class _HomeTabScreenState extends State<HomeTabScreen> {
+class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
   final _nutriRepo = NutricionistaRepository();
   final _pacienteRepo = PacienteRepository();
 
@@ -36,7 +38,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Future<void> _carregarDados() async {
     setState(() => _isLoading = true);
     try {
-      final nutri = await _nutriRepo.buscarPorId(widget.nutriId);
+      final nutri = await _nutriRepo.buscarPorId(1);
 
       final todosPacientes = await _pacienteRepo.listar();
 

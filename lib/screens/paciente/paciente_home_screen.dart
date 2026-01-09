@@ -12,9 +12,15 @@ import '../../classes/nutricionista.dart';
 import '../../database/nutricionista_repository.dart';
 
 class HomeTabScreen extends StatefulWidget {
-  final String pacienteId; // MUDANÇA: int -> String
-  const HomeTabScreen({super.key, required this.pacienteId});
+  final String pacienteId;
+  final Function(int) onMudarAba;
 
+  const HomeTabScreen({
+    super.key, 
+    required this.pacienteId,
+    required this.onMudarAba,
+  });
+  
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
 }
@@ -237,20 +243,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             ),
             trailing: const Icon(Icons.add_circle_outline),
           ),
-          /* Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.calendar_today),
-                  label: const Text("Agenda"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orangeAccent,
-                  ),
-                ),
-              ),
-            ],
-          ), */
         ],
       ),
     );
@@ -356,12 +348,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           const SizedBox(height: 12),
           InkWell(
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PacienteNavigation(currentPageIndex: 2),
-                ),
-              );
+              widget.onMudarAba(2);
             },
             borderRadius: BorderRadius.circular(25),
             child: Container(
@@ -492,12 +479,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           const SizedBox(height: 12),
           InkWell(
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PacienteNavigation(currentPageIndex: 1),
-                ),
-              );
+              widget.onMudarAba(1);
             },
             borderRadius: BorderRadius.circular(25),
             child: Container(
