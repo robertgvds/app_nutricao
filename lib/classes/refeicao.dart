@@ -3,24 +3,19 @@ import "alimento.dart";
 // Classe que representa uma refeição do dia
 // Exemplo: Café da Manhã, Almoço, Lanche, Jantar
 class Refeicao {
-  // Nome da refeição
-  // Ex: "Café da Manhã", "Almoço", "Jantar"
-  String nome;
+  final String id;
+  final String nome; // "Café da Manhã", "Almoço"
+  final String horario; // "08:00"
+  final List<Alimento> alimentos;
 
-  // Lista de alimentos que compõem a refeição
-  // Cada alimento possui informações como peso e calorias
-  List<Alimento> alimentos;
+  Refeicao({
+    required this.id,
+    required this.nome,
+    required this.horario,
+    required this.alimentos,
+  });
 
-  // Construtor da classe
-  // O nome da refeição é obrigatório
-  // A lista de alimentos é opcional e, por padrão, inicia vazia
-  Refeicao({required this.nome, this.alimentos = const []});
-
-  // Getter que calcula o peso total da refeição
-  // Soma o peso de todos os alimentos presentes na lista
-  double get pesoTotal {
-    return alimentos.fold(0, (soma, item) => soma + item.peso);
-  }
+  double get totalCalorias => alimentos.fold(0, (sum, item) => sum + item.totalCalorias);
 
   // Getter que calcula o total de calorias da refeição
   // Soma as calorias de todos os alimentos da lista
@@ -42,15 +37,12 @@ class Refeicao {
   // Normalmente utilizado ao recuperar dados do banco ou de um JSON
   factory Refeicao.fromMap(Map<String, dynamic> map) {
     return Refeicao(
-      // Caso o nome não exista no Map, usa string vazia como padrão
+      id: map['id'] ?? '',
       nome: map['nome'] ?? '',
-      // Converte a lista de Maps em uma lista de objetos Alimento
-      alimentos:
-          map['alimentos'] != null
-              ? List<Alimento>.from(
-                (map['alimentos'] as List).map((x) => Alimento.fromMap(x)),
-              )
-              : [],
+      horario: map['horario'] ?? '',
+      alimentos: List<Alimento>.from(
+        (map['alimentos'] as List<dynamic>? ?? []).map((x) => Alimento.fromMap(Map<String, dynamic>.from(x))),
+      ),
     );
   }
 

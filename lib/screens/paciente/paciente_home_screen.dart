@@ -314,7 +314,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                           children:
                               proxima.alimentos.map((alimento) {
                                 return _buildItemLinha(
-                                  "${alimento.nome} (${alimento.peso}g)",
+                                  "${alimento.nome} (${alimento.quantidade}${alimento.unidade})",
                                 );
                               }).toList(),
                         ),

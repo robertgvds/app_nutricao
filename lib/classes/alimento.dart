@@ -1,30 +1,60 @@
 // Classe que representa um alimento
 class Alimento {
-  // Nome do alimento (ex: Arroz, Maçã, Frango)
-  String nome;
+  final String id;
+  final String nome;
+  final String categoria; // Ex: 'TACO', 'Personalizado'
+  final double calorias;
+  final double proteinas;
+  final double carboidratos;
+  final double gorduras;
+  double quantidade; // Em gramas ou unidade
+  String unidade; // 'g', 'ml', 'unidade'
 
-  // Peso do alimento (em gramas, por exemplo)
-  double peso;
+  Alimento({
+    required this.id,
+    required this.nome,
+    this.categoria = 'Geral',
+    required this.calorias,
+    required this.proteinas,
+    required this.carboidratos,
+    required this.gorduras,
+    this.quantidade = 100,
+    this.unidade = 'g',
+  });
 
-  // Quantidade de calorias do alimento
-  double calorias;
-
-  // Construtor da classe
-  // O uso de 'required' obriga que todos os campos sejam informados ao criar um objeto Alimento
-  Alimento({required this.nome, required this.peso, required this.calorias});
+  // Getters para calcular totais baseados na quantidade
+  double get totalCalorias => (calorias * quantidade) / 100;
+  double get totalProteinas => (proteinas * quantidade) / 100;
+  double get totalCarboidratos => (carboidratos * quantidade) / 100;
+  double get totalGorduras => (gorduras * quantidade) / 100;
 
   // Converte o objeto Alimento em um Map Útil para salvar em banco de dados
   Map<String, dynamic> toMap() {
-    return {'nome': nome, 'peso': peso, 'calorias': calorias};
+    return {
+      'id': id,
+      'nome': nome,
+      'calorias': calorias,
+      'proteinas': proteinas,
+      'carboidratos': carboidratos,
+      'categoria': categoria,
+      'gorduras': gorduras,
+      'quantidade': quantidade,
+      'unidade': unidade,
+    };
   }
 
   // Construtor factory que cria um objeto Alimento a partir de um Map (ex: dados vindos do banco ou JSON)
   factory Alimento.fromMap(Map<String, dynamic> map) {
     return Alimento(
-      // Se o valor não existir no Map, usa um valor padrão
+      id: map['id'] ?? '',
       nome: map['nome'] ?? '',
-      peso: map['peso'] ?? 0,
       calorias: map['calorias'] ?? 0,
+      proteinas: map['proteinas'] ?? 0,
+      carboidratos: map['carboidratos'] ?? 0,
+      categoria: map['categoria'] ?? 'Geral',
+      gorduras: map['gorduras'] ?? 0,
+      quantidade: map['quantidade'] ?? 0,
+      unidade: map['unidade'] ?? 'g',
     );
   }
 }
