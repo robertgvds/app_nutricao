@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_database/firebase_database.dart';
 import '../../classes/antropometria.dart';
 import '../../database/antropometria_repository.dart';
 import '../../widgets/app_colors.dart';
@@ -24,6 +25,7 @@ class _NutricionistaAntropometriaScreenState
 
   List<Antropometria> _historico = [];
   bool _isLoading = true;
+  String _generoPaciente = 'Masculino'; 
 
   String? _idAvaliacaoEmEdicao;
   DateTime? _dataOriginalEmEdicao;
@@ -48,18 +50,31 @@ class _NutricionistaAntropometriaScreenState
   @override
   void initState() {
     super.initState();
-    _carregarHistorico();
+    _carregarDadosIniciais();
   }
 
-  Future<void> _carregarHistorico() async {
-    final lista = await _repository.buscarHistorico(widget.pacienteId);
-    lista.sort((a, b) =>
-        (b.data ?? DateTime.now()).compareTo(a.data ?? DateTime.now()));
+  Future<void> _carregarDadosIniciais() async {
+    setState(() => _isLoading = true);
+    try {
+      final snapshot = await FirebaseDatabase.instance.ref('usuarios/${widget.pacienteId}').get();
+      if (snapshot.exists) {
+        final dados = snapshot.value as Map;
+        setState(() {
+          _generoPaciente = dados['genero'] ?? 'Masculino';
+        });
+      }
 
-    setState(() {
-      _historico = lista;
-      _isLoading = false;
-    });
+      final lista = await _repository.buscarHistorico(widget.pacienteId);
+      lista.sort((a, b) => (b.data ?? DateTime.now()).compareTo(a.data ?? DateTime.now()));
+      
+      setState(() {
+        _historico = lista;
+      });
+    } catch (e) {
+      debugPrint("Erro ao carregar: $e");
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _calcularSugestaoAutomatica(String tipo, String valorTexto) {
@@ -68,190 +83,59 @@ class _NutricionistaAntropometriaScreenState
     if (valor == null) return;
 
     String sugestao = 'Ideal';
+    bool isFem = _generoPaciente == 'Feminino';
 
     switch (tipo) {
       case 'IMC':
         if (valor < 18.5) sugestao = 'Abaixo';
         else if (valor >= 25.0) sugestao = 'Acima';
-        else sugestao = 'Ideal';
         setState(() => _classImc = sugestao);
         break;
-
       case 'Gordura':
-        if (valor < 10) sugestao = 'Abaixo';
-        else if (valor > 25) sugestao = 'Acima';
-        else sugestao = 'Ideal';
+        double min = isFem ? 18.0 : 10.0;
+        double max = isFem ? 30.0 : 25.0;
+        if (valor < min) sugestao = 'Abaixo';
+        else if (valor > max) sugestao = 'Acima';
         setState(() => _classPercentualGordura = sugestao);
         break;
-
       case 'MassaGorda':
         if (valor < 5) sugestao = 'Abaixo';
         else if (valor > 30) sugestao = 'Acima';
-        else sugestao = 'Ideal';
         setState(() => _classMassaGordura = sugestao);
         break;
-
       case 'RCQ':
-        if (valor > 0.90) sugestao = 'Acima';
+        double limiteAlto = isFem ? 0.85 : 0.90;
+        if (valor > limiteAlto) sugestao = 'Acima';
         else if (valor < 0.70) sugestao = 'Abaixo';
-        else sugestao = 'Ideal';
         setState(() => _classRcq = sugestao);
         break;
-
       case 'CMB':
-        if (valor < 22) sugestao = 'Abaixo';
-        else if (valor > 35) sugestao = 'Acima';
-        else sugestao = 'Ideal';
+        double min = isFem ? 20.0 : 22.0;
+        double max = isFem ? 32.0 : 35.0;
+        if (valor < min) sugestao = 'Abaixo';
+        else if (valor > max) sugestao = 'Acima';
         setState(() => _classCmb = sugestao);
         break;
     }
   }
 
-  void _mostrarLegenda(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Parâmetros de Referência",
-            style: TextStyle(
-                color: AppColors.roxo, fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                  "O sistema sugere a classificação automaticamente com base nos seguintes cortes (mas você pode alterar manualmente):",
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(height: 16),
-              _buildTabelaParametro(
-                  "IMC (kg/m²)", "< 18.5", "18.5 - 24.9", "≥ 25.0"),
-              _buildTabelaParametro(
-                  "% Gordura", "< 10%", "10% - 25%", "> 25%"),
-              _buildTabelaParametro(
-                  "Massa Gorda (kg)", "< 5", "5 - 30", "> 30"),
-              _buildTabelaParametro(
-                  "RCQ", "< 0.70", "0.70 - 0.90", "> 0.90"),
-              _buildTabelaParametro(
-                  "CMB (cm)", "< 22", "22 - 35", "> 35"),
-              const SizedBox(height: 12),
-              const Divider(),
-              const Text(
-                  "* Demais campos: Sugestão baseada em média populacional genérica.",
-                  style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic)),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child:
-                const Text("Entendi", style: TextStyle(color: AppColors.roxo)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabelaParametro(
-      String nome, String baixo, String ideal, String alto) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(nome,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: AppColors.roxo)),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              _buildBadgeLegenda("Abaixo", baixo, const Color(0xFF5E6EE6)),
-              const SizedBox(width: 8),
-              _buildBadgeLegenda("Ideal", ideal, const Color(0xFF4CAF50)),
-              const SizedBox(width: 8),
-              _buildBadgeLegenda("Acima", alto, const Color(0xFFFF7043)),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBadgeLegenda(String label, String valor, Color cor) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-            color: cor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: cor.withOpacity(0.5))),
-        child: Column(
-          children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.bold, color: cor)),
-            Text(valor,
-                style: const TextStyle(fontSize: 10, color: Colors.black87),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _carregarParaEdicao(Antropometria item) {
-    setState(() {
-      _idAvaliacaoEmEdicao = item.id_avaliacao;
-      _dataOriginalEmEdicao = item.data;
-
-      _classMassaCorporal = item.classMassaCorporal ?? 'Ideal';
-      _classMassaGordura = item.classMassaGordura ?? 'Ideal';
-      _classPercentualGordura = item.classPercentualGordura ?? 'Ideal';
-      _classMassaEsqueletica = item.classMassaEsqueletica ?? 'Ideal';
-      _classImc = item.classImc ?? 'Ideal';
-      _classCmb = item.classCmb ?? 'Ideal';
-      _classRcq = item.classRcq ?? 'Ideal';
-    });
-
-    _massaCorporalCtrl.text = item.massaCorporal?.toString() ?? '';
-    _massaGorduraCtrl.text = item.massaGordura?.toString() ?? '';
-    _percentualGorduraCtrl.text = item.percentualGordura?.toString() ?? '';
-    _massaEsqueleticaCtrl.text = item.massaEsqueletica?.toString() ?? '';
-    _imcCtrl.text = item.imc?.toString() ?? '';
-    _cmbCtrl.text = item.cmb?.toString() ?? '';
-    _rcqCtrl.text = item.relacaoCinturaQuadril?.toString() ?? '';
-    _obsCtrl.text = item.observacoes ?? '';
-
-    Scrollable.ensureVisible(_formKey.currentContext!,
-        duration: const Duration(milliseconds: 500));
-  }
-
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
-    DateTime dataFinal =
-        (_idAvaliacaoEmEdicao != null && _dataOriginalEmEdicao != null)
-            ? _dataOriginalEmEdicao!
-            : DateTime.now();
+    DateTime dataFinal = (_idAvaliacaoEmEdicao != null && _dataOriginalEmEdicao != null)
+        ? _dataOriginalEmEdicao!
+        : DateTime.now();
 
     final novaAvaliacao = Antropometria(
       id_avaliacao: _idAvaliacaoEmEdicao,
-      massaCorporal:
-          double.tryParse(_massaCorporalCtrl.text.replaceAll(',', '.')),
-      massaGordura:
-          double.tryParse(_massaGorduraCtrl.text.replaceAll(',', '.')),
-      percentualGordura:
-          double.tryParse(_percentualGorduraCtrl.text.replaceAll(',', '.')),
-      massaEsqueletica:
-          double.tryParse(_massaEsqueleticaCtrl.text.replaceAll(',', '.')),
+      massaCorporal: double.tryParse(_massaCorporalCtrl.text.replaceAll(',', '.')),
+      massaGordura: double.tryParse(_massaGorduraCtrl.text.replaceAll(',', '.')),
+      percentualGordura: double.tryParse(_percentualGorduraCtrl.text.replaceAll(',', '.')),
+      massaEsqueletica: double.tryParse(_massaEsqueleticaCtrl.text.replaceAll(',', '.')),
       imc: double.tryParse(_imcCtrl.text.replaceAll(',', '.')),
       cmb: double.tryParse(_cmbCtrl.text.replaceAll(',', '.')),
-      relacaoCinturaQuadril:
-          double.tryParse(_rcqCtrl.text.replaceAll(',', '.')),
+      relacaoCinturaQuadril: double.tryParse(_rcqCtrl.text.replaceAll(',', '.')),
       classMassaCorporal: _classMassaCorporal,
       classMassaGordura: _classMassaGordura,
       classPercentualGordura: _classPercentualGordura,
@@ -264,16 +148,12 @@ class _NutricionistaAntropometriaScreenState
     );
 
     await _repository.salvarAvaliacao(widget.pacienteId, novaAvaliacao);
-
     _limparCampos();
-    await _carregarHistorico();
-
-    setState(() => _isLoading = false);
-
+    await _carregarDadosIniciais();
+    
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Salvo com sucesso!'), backgroundColor: Colors.green),
+      const SnackBar(content: Text('Salvo com sucesso!'), backgroundColor: Colors.green),
     );
   }
 
@@ -281,22 +161,34 @@ class _NutricionistaAntropometriaScreenState
     setState(() {
       _idAvaliacaoEmEdicao = null;
       _dataOriginalEmEdicao = null;
-      _classMassaCorporal = 'Ideal';
-      _classMassaGordura = 'Ideal';
-      _classPercentualGordura = 'Ideal';
-      _classMassaEsqueletica = 'Ideal';
-      _classImc = 'Ideal';
-      _classCmb = 'Ideal';
-      _classRcq = 'Ideal';
+      _classMassaCorporal = _classMassaGordura = _classPercentualGordura = 
+      _classMassaEsqueletica = _classImc = _classCmb = _classRcq = 'Ideal';
     });
-    _massaCorporalCtrl.clear();
-    _massaGorduraCtrl.clear();
-    _percentualGorduraCtrl.clear();
-    _massaEsqueleticaCtrl.clear();
-    _imcCtrl.clear();
-    _cmbCtrl.clear();
-    _rcqCtrl.clear();
-    _obsCtrl.clear();
+    _massaCorporalCtrl.clear(); _massaGorduraCtrl.clear();
+    _percentualGorduraCtrl.clear(); _massaEsqueleticaCtrl.clear();
+    _imcCtrl.clear(); _cmbCtrl.clear(); _rcqCtrl.clear(); _obsCtrl.clear();
+  }
+
+  void _carregarParaEdicao(Antropometria item) {
+    setState(() {
+      _idAvaliacaoEmEdicao = item.id_avaliacao;
+      _dataOriginalEmEdicao = item.data;
+      _classMassaCorporal = item.classMassaCorporal ?? 'Ideal';
+      _classMassaGordura = item.classMassaGordura ?? 'Ideal';
+      _classPercentualGordura = item.classPercentualGordura ?? 'Ideal';
+      _classMassaEsqueletica = item.classMassaEsqueletica ?? 'Ideal';
+      _classImc = item.classImc ?? 'Ideal';
+      _classCmb = item.classCmb ?? 'Ideal';
+      _classRcq = item.classRcq ?? 'Ideal';
+    });
+    _massaCorporalCtrl.text = item.massaCorporal?.toString() ?? '';
+    _massaGorduraCtrl.text = item.massaGordura?.toString() ?? '';
+    _percentualGorduraCtrl.text = item.percentualGordura?.toString() ?? '';
+    _massaEsqueleticaCtrl.text = item.massaEsqueletica?.toString() ?? '';
+    _imcCtrl.text = item.imc?.toString() ?? '';
+    _cmbCtrl.text = item.cmb?.toString() ?? '';
+    _rcqCtrl.text = item.relacaoCinturaQuadril?.toString() ?? '';
+    _obsCtrl.text = item.observacoes ?? '';
   }
 
   @override
@@ -310,255 +202,102 @@ class _NutricionistaAntropometriaScreenState
       appBar: AppBar(
         backgroundColor: AppColors.roxo,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Adicionar/Editar Avaliação',
-            style: TextStyle(color: Colors.white)),
+        title: const Text('Avaliação Antropométrica', style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(20),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                        _idAvaliacaoEmEdicao != null
-                                            ? 'Editando'
-                                            : 'Nova Avaliação',
-                                        style: TextStyle(
-                                            color: AppColors.roxo,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    Text(dataExibida,
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: _obsCtrl,
-                                  maxLines: 2,
-                                  decoration: InputDecoration(
-                                    hintText: 'Observações...',
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Classificação dos Índices',
-                                  style: TextStyle(
-                                      color: AppColors.roxo,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
-                              IconButton(
-                                icon: const Icon(Icons.help_outline,
-                                    color: AppColors.roxo),
-                                onPressed: () => _mostrarLegenda(context),
-                                tooltip: "Ver legenda",
-                              )
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                              'Preencha o valor e a classificação será sugerida (clique para alterar):',
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 12)),
-                          const SizedBox(height: 16),
-                          _buildInputComStatus(
-                              'Massa Corporal',
-                              _massaCorporalCtrl,
-                              _classMassaCorporal,
-                              (val) =>
-                                  setState(() => _classMassaCorporal = val),
-                              null),
-                          _buildInputComStatus(
-                              'Massa de Gordura',
-                              _massaGorduraCtrl,
-                              _classMassaGordura,
-                              (val) => setState(() => _classMassaGordura = val),
-                              (val) => _calcularSugestaoAutomatica(
-                                  'MassaGorda', val)),
-                          _buildInputComStatus(
-                              'Percentual de Gordura',
-                              _percentualGorduraCtrl,
-                              _classPercentualGordura,
-                              (val) =>
-                                  setState(() => _classPercentualGordura = val),
-                              (val) =>
-                                  _calcularSugestaoAutomatica('Gordura', val)),
-                          _buildInputComStatus(
-                              'Massa Esquelética',
-                              _massaEsqueleticaCtrl,
-                              _classMassaEsqueletica,
-                              (val) =>
-                                  setState(() => _classMassaEsqueletica = val),
-                              null),
-                          _buildInputComStatus(
-                              'IMC',
-                              _imcCtrl,
-                              _classImc,
-                              (val) => setState(() => _classImc = val),
-                              (val) => _calcularSugestaoAutomatica('IMC', val)),
-                          _buildInputComStatus(
-                              'CMB',
-                              _cmbCtrl,
-                              _classCmb,
-                              (val) => setState(() => _classCmb = val),
-                              (val) => _calcularSugestaoAutomatica('CMB', val)),
-                          _buildInputComStatus(
-                              'Relação C/Q',
-                              _rcqCtrl,
-                              _classRcq,
-                              (val) => setState(() => _classRcq = val),
-                              (val) => _calcularSugestaoAutomatica('RCQ', val)),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                  onPressed: _salvar,
-                                  icon: const Icon(Icons.check,
-                                      color: Colors.white),
-                                  label: const Text('Salvar'),
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF4CAF50),
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 14)))),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    _limparCampos();
-                                    Navigator.pop(context);
-                                  },
-                                  icon: const Icon(Icons.close,
-                                      color: Colors.white),
-                                  label: const Text('Cancelar'),
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFF5722),
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 14)))),
-                          const SizedBox(height: 30),
-                          if (_historico.isNotEmpty) ...[
-                            Text('Histórico',
-                                style: TextStyle(
-                                    color: AppColors.roxo,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _historico.length,
-                              itemBuilder: (ctx, i) =>
-                                  _buildHistoricoItem(_historico[i]),
-                            )
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+        : SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10),
+              decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30))),
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildHeaderCard(dataExibida),
+                    const SizedBox(height: 25),
+                    _buildSecaoTitulo(),
+                    const SizedBox(height: 15),
+                    _buildInputComStatus('Massa Corporal (kg)', _massaCorporalCtrl, _classMassaCorporal, (val) => setState(() => _classMassaCorporal = val), null),
+                    _buildInputComStatus('Massa de Gordura (kg)', _massaGorduraCtrl, _classMassaGordura, (val) => setState(() => _classMassaGordura = val), (v) => _calcularSugestaoAutomatica('MassaGorda', v)),
+                    _buildInputComStatus('Massa Esquelética (kg)', _massaEsqueleticaCtrl, _classMassaEsqueletica, (val) => setState(() => _classMassaEsqueletica = val), null),
+                    _buildInputComStatus('Percentual Gordura (%)', _percentualGorduraCtrl, _classPercentualGordura, (val) => setState(() => _classPercentualGordura = val), (v) => _calcularSugestaoAutomatica('Gordura', v)),
+                    _buildInputComStatus('IMC (kg/m²)', _imcCtrl, _classImc, (val) => setState(() => _classImc = val), (v) => _calcularSugestaoAutomatica('IMC', v)),
+                    _buildInputComStatus('Relação Cintura/Quadril', _rcqCtrl, _classRcq, (val) => setState(() => _classRcq = val), (v) => _calcularSugestaoAutomatica('RCQ', v)),
+                    _buildInputComStatus('CMB (cm)', _cmbCtrl, _classCmb, (val) => setState(() => _classCmb = val), (v) => _calcularSugestaoAutomatica('CMB', v)),
+                    const SizedBox(height: 20),
+                    _buildBotoesAcao(),
+                    const SizedBox(height: 30),
+                    _buildHistoricoList(),
+                  ],
+                ),
               ),
             ),
+          ),
     );
   }
 
-  Widget _buildInputComStatus(
-      String label,
-      TextEditingController ctrl,
-      String statusAtual,
-      Function(String) onStatusChanged,
-      Function(String)? onChangedInput) {
+  // --- WIDGETS AUXILIARES ---
+
+  Widget _buildHeaderCard(String data) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(_idAvaliacaoEmEdicao != null ? 'Editando Avaliação' : 'Nova Avaliação', style: const TextStyle(color: AppColors.roxo, fontWeight: FontWeight.bold)),
+              Text(data, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _obsCtrl,
+            maxLines: 2,
+            decoration: InputDecoration(hintText: 'Observações...', filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecaoTitulo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Classificação dos Índices', style: TextStyle(color: AppColors.roxo, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Perfil: $_generoPaciente', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        ]),
+        IconButton(icon: const Icon(Icons.help_outline, color: AppColors.roxo), onPressed: () => _mostrarLegenda(context)),
+      ],
+    );
+  }
+
+  Widget _buildInputComStatus(String label, TextEditingController ctrl, String statusAtual, Function(String) onStatusChanged, Function(String)? onChangedInput) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!)),
+      decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                  child: Text(label,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13))),
-              SizedBox(
-                width: 80,
-                height: 35,
-                child: TextFormField(
-                  controller: ctrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.center,
-                  onChanged: (val) {
-                    if (onChangedInput != null) onChangedInput(val);
-                  },
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.only(bottom: 10),
-                    hintText: '0.0',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          Row(children: [
+            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+            SizedBox(width: 80, height: 35, child: TextFormField(controller: ctrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), textAlign: TextAlign.center, onChanged: onChangedInput, decoration: InputDecoration(contentPadding: const EdgeInsets.only(bottom: 10), hintText: '0.0', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))))),
+          ]),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildChoiceChip('Abaixo', const Color(0xFF5E6EE6), statusAtual,
-                  onStatusChanged),
-              _buildChoiceChip('Ideal', const Color(0xFF4CAF50), statusAtual,
-                  onStatusChanged),
-              _buildChoiceChip('Acima', const Color(0xFFFF7043), statusAtual,
-                  onStatusChanged),
+              _buildChoiceChip('Abaixo', const Color(0xFF5E6EE6), statusAtual, onStatusChanged),
+              _buildChoiceChip('Ideal', const Color(0xFF4CAF50), statusAtual, onStatusChanged),
+              _buildChoiceChip('Acima', const Color(0xFFFF7043), statusAtual, onStatusChanged),
             ],
           )
         ],
@@ -566,56 +305,81 @@ class _NutricionistaAntropometriaScreenState
     );
   }
 
-  Widget _buildChoiceChip(String label, Color color, String currentSelection,
-      Function(String) onSelect) {
-    bool isSelected = currentSelection == label;
+  Widget _buildChoiceChip(String label, Color color, String current, Function(String) onSelect) {
+    bool selected = current == label;
     return GestureDetector(
       onTap: () => onSelect(label),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? color : Colors.grey[300]!),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey,
-              fontSize: 11,
-              fontWeight: FontWeight.bold),
-        ),
+        decoration: BoxDecoration(color: selected ? color : Colors.transparent, borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? color : Colors.grey[300]!)),
+        child: Text(label, style: TextStyle(color: selected ? Colors.white : Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
       ),
     );
+  }
+
+  Widget _buildBotoesAcao() {
+    return Column(children: [
+      SizedBox(width: double.infinity, child: ElevatedButton.icon(onPressed: _salvar, icon: const Icon(Icons.check, color: Colors.white), label: const Text('Salvar'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF4CAF50), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14)))),
+      const SizedBox(height: 10),
+      if (_idAvaliacaoEmEdicao != null) TextButton(onPressed: _limparCampos, child: const Text('Cancelar Edição', style: TextStyle(color: Colors.red))),
+    ]);
+  }
+
+  Widget _buildHistoricoList() {
+    if (_historico.isEmpty) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('Histórico', style: TextStyle(color: AppColors.roxo, fontSize: 18, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 10),
+      ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: _historico.length, itemBuilder: (ctx, i) => _buildHistoricoItem(_historico[i])),
+    ]);
   }
 
   Widget _buildHistoricoItem(Antropometria item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(DateFormat('dd/MM/yyyy').format(item.data!),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(
-                'Peso: ${item.massaCorporal ?? '-'} | Gordura: ${item.percentualGordura ?? '-'}%',
-                style: const TextStyle(fontSize: 12))
+      decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(DateFormat('dd/MM/yyyy').format(item.data!), style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('Peso: ${item.massaCorporal ?? '-'} | IMC: ${item.imc ?? '-'}', style: const TextStyle(fontSize: 12)),
+        ]),
+        ElevatedButton(onPressed: () => _carregarParaEdicao(item), style: ElevatedButton.styleFrom(backgroundColor: AppColors.roxo, minimumSize: const Size(60, 30)), child: const Text('Editar', style: TextStyle(color: Colors.white, fontSize: 10))),
+      ]),
+    );
+  }
+
+  void _mostrarLegenda(BuildContext context) {
+    bool isFem = _generoPaciente == 'Feminino';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Referência (${_generoPaciente})", style: const TextStyle(color: AppColors.roxo, fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _buildTabelaRow("IMC", "< 18.5", "18.5-24.9", "≥ 25.0"),
+            _buildTabelaRow("% Gordura", isFem ? "< 18%" : "< 10%", isFem ? "18-30%" : "10-25%", isFem ? "> 30%" : "> 25%"),
+            _buildTabelaRow("RCQ", "< 0.70", isFem ? "0.70-0.85" : "0.70-0.90", isFem ? "> 0.85" : "> 0.90"),
+            _buildTabelaRow("CMB", isFem ? "< 20" : "< 22", isFem ? "20-32" : "22-35", isFem ? "> 32" : "> 35"),
           ]),
-          ElevatedButton(
-            onPressed: () => _carregarParaEdicao(item),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.roxo,
-                minimumSize: const Size(60, 30)),
-            child: const Text('Editar',
-                style: TextStyle(color: Colors.white, fontSize: 10)),
-          )
-        ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Fechar"))],
       ),
     );
   }
+
+  Widget _buildTabelaRow(String label, String b, String i, String a) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.roxo, fontSize: 13)),
+        const SizedBox(height: 4),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          _badge(b, const Color(0xFF5E6EE6)), _badge(i, const Color(0xFF4CAF50)), _badge(a, const Color(0xFFFF7043)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _badge(String txt, Color c) => Container(padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(4)), child: Text(txt, style: TextStyle(fontSize: 10, color: c, fontWeight: FontWeight.bold)));
 }
