@@ -1,24 +1,26 @@
+import 'package:app/widgets/app_colors.dart';
 import 'package:flutter/material.dart';
-// REMOVIDO: import 'package:app/database/testeDB/teste_db.dart';
 import 'package:app/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/material.dart';
-import '../../classes/refeicao.dart';
 import '../../classes/nutricionista.dart';
 import '../../database/nutricionista_repository.dart';
 import '../../database/paciente_repository.dart';
 import '../../classes/paciente.dart';
-import '../../database/antropometria_repository.dart';
 import 'nutricionista_antropometria_screen.dart';
 
 class NutricionistaHomeScreen extends StatefulWidget {
   final String nutriId;
   final Function(int) onMudarAba;
 
-  const NutricionistaHomeScreen({super.key, required this.nutriId, required this.onMudarAba});
+  const NutricionistaHomeScreen({
+    super.key,
+    required this.nutriId,
+    required this.onMudarAba,
+  });
 
   @override
-  State<NutricionistaHomeScreen> createState() => _NutricionistaHomeScreenState();
+  State<NutricionistaHomeScreen> createState() =>
+      _NutricionistaHomeScreenState();
 }
 
 class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
@@ -76,31 +78,66 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
-      body: RefreshIndicator(
-        onRefresh: _carregarDados,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 20),
-              const Divider(),
-              _buildSecaoTitulo(
-                "Avaliações Pendentes",
-                const Color(0xFF916DD5),
-              ),
-              ..._meusPacientes.where((p) => p.antropometria == null).map((p) {
-                return _cardAvaliacaoPendente(p);
-              }).toList(),
-
-              const SizedBox(height: 50),
-            ],
+      backgroundColor: AppColors.laranja,
+      appBar: AppBar(
+        backgroundColor: AppColors.laranja,
+        elevation: 0,
+        title: const Text('Mango Nutri', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app, color: Colors.white),
+            onPressed: () => context.read<AuthService>().logout(),
           ),
-        ),
+        ],
       ),
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              )
+              : CustomScrollView(
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 20),
+                          const Divider(),
+                          _buildSecaoTitulo(
+                            "Avaliações Pendentes",
+                            const Color(0xFF916DD5),
+                          ),
+                          ..._meusPacientes
+                              .where((p) => p.antropometria == null)
+                              .map((p) {
+                                return _cardAvaliacaoPendente(p);
+                              })
+                              .toList(),
+
+                          const SizedBox(height: 50),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
     );
   }
 

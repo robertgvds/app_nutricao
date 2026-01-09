@@ -66,14 +66,9 @@ class _NutricionistaNavigationState extends State<NutricionistaNavigation> {late
             label: 'Home',
           ),
           NavigationDestination(
-            selectedIcon: Icon(Icons.accessibility_new_rounded),
-            icon: Icon(Icons.accessibility_new_outlined),
-            label: 'Antropometria',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.restaurant_menu),
-            icon: Icon(Icons.restaurant_menu_outlined),
-            label: 'Plano Alimentar',
+            selectedIcon: Icon(Icons.people_alt_outlined),
+            icon: Icon(Icons.people_alt_rounded),
+            label: 'Pacientes',
           ),
         ],
       ),
