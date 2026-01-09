@@ -1,25 +1,11 @@
-// Classe que representa um usuário do sistema
-// Armazena dados básicos de identificação e autenticação
 class Usuario {
-  // Identificador único do usuário no banco de dados
-  int? id;
-
-  // Nome completo do usuário
+  String? id; // MUDADO DE int PARA String (Firebase UID)
   String nome;
-
-  // Endereço de e-mail do usuário
   String email;
-
-  // Senha do usuário
   String senha;
-
-  // Código de identificação adicional
   String codigo;
-
-  // Data de nascimento do usuário
   String dataNascimento;
 
-  // Construtor da classe
   Usuario({
     this.id,
     required this.nome,
@@ -29,7 +15,6 @@ class Usuario {
     required this.dataNascimento,
   });
 
-  // Converte o objeto Usuario em um Map<String, dynamic>
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -41,10 +26,9 @@ class Usuario {
     };
   }
 
-  // Construtor factory que cria um objeto Usuario a partir de um Map
   factory Usuario.fromMap(Map<String, dynamic> map) {
     return Usuario(
-      id: map['id'] is int ? map['id'] : null,
+      id: map['id']?.toString(), // Garante conversão para String
       nome: map['nome'] ?? '',
       email: map['email'] ?? '',
       senha: map['senha'] ?? '',

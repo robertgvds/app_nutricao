@@ -10,7 +10,7 @@ import '../../classes/paciente.dart';
 import '../../classes/refeicao.dart';
 
 class HomeTabScreen extends StatefulWidget {
-  final int pacienteId;
+  final String pacienteId; // MUDANÇA: int -> String
   const HomeTabScreen({super.key, required this.pacienteId});
 
   @override
@@ -51,7 +51,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           _ultimaAvaliacao = historico.last;
         }
 
-        _isLoading = false; // Só encerra o loading aqui
+        _isLoading = false; 
       });
     } catch (e) {
       debugPrint("Erro ao carregar dados: $e");
@@ -88,7 +88,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
         ],
       ),
-      // 1. Alterado para CustomScrollView
       body:
           _isLoading
               ? const Center(
@@ -96,10 +95,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               )
               : CustomScrollView(
                 slivers: [
-                  // 3. A parte branca usa SliverFillRemaining para ocupar todo o espaço restante
                   SliverFillRemaining(
                     hasScrollBody:
-                        false, // Importante: Permite que o container estique ou role conforme necessário
+                        false, 
                     child: Container(
                       width: double.infinity,
                       decoration: const BoxDecoration(
@@ -118,19 +116,18 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
                         children: [
                           _buildHeader(),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           if (_paciente?.nutricionistaCrn == null ||
                               _paciente!.nutricionistaCrn!.isEmpty) ...[
                             const SizedBox(height: 20),
                             _buildBuscaNutricionistaSection(),
-                            /* ] else ...[ */
                             const SizedBox(height: 20),
                             _buildNutricionistaCard(),
                           ],
                           _buildProximaRefeicao(),
-                          SizedBox(height: 25),
+                          const SizedBox(height: 25),
                           _buildAvaliacaoFisica(),
-                          SizedBox(height: 100),
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -140,30 +137,29 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     );
   }
 
-  // Componente de Cabeçalho
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         RichText(
           text: TextSpan(
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
             children: [
-              TextSpan(text: "Olá, "),
+              const TextSpan(text: "Olá, "),
               TextSpan(
                 text: _paciente?.nome ?? "Nome Sobrenome",
-                style: TextStyle(color: Colors.orange),
+                style: const TextStyle(color: Colors.orange),
               ),
             ],
           ),
         ),
         Text("Idade: ${_paciente?.idade ?? '--'} anos"),
         Text("Peso: ${_ultimaAvaliacao?.massaCorporal ?? '--'} kg"),
-        Text("Objetivo: XX"),
+        const Text("Objetivo: XX"),
       ],
     );
   }
@@ -171,11 +167,8 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
   Widget _buildBuscaNutricionistaSection() {
     return Column(
       children: [
-        // Linha divisória superior
         const Divider(color: Colors.black12, thickness: 1),
         const SizedBox(height: 16),
-
-        // Texto informativo
         const Text(
           "Você ainda não possui um nutricionista!",
           style: TextStyle(
@@ -185,14 +178,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
         ),
         const SizedBox(height: 16),
-
-        // Botão de Busca
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () {
-              // Lógica para navegar para tela de busca
-            },
+            onPressed: () {},
             icon: const Icon(Icons.search, color: Colors.orange, size: 20),
             label: const Text(
               "Buscar um nutricionista",
@@ -204,7 +193,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Colors.orange, width: 1),
-              shape: const StadiumBorder(), // Formato arredondado
+              shape: const StadiumBorder(),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
@@ -213,10 +202,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     );
   }
 
-  // Card do Nutricionista
   Widget _buildNutricionistaCard() {
     return Container(
-      padding: EdgeInsets.all(15),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(20),
@@ -224,23 +212,23 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       child: Column(
         children: [
           ListTile(
-            leading: CircleAvatar(radius: 25),
-            title: Text(
+            leading: const CircleAvatar(radius: 25),
+            title: const Text(
               "Nome Nutricionista",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              "Última avaliação em ${_ultimaAvaliacao?.data ?? '--'}",
+              "Última avaliação em ${_ultimaAvaliacao?.data.toString().substring(0, 10) ?? '--'}",
             ),
-            trailing: Icon(Icons.add_circle_outline),
+            trailing: const Icon(Icons.add_circle_outline),
           ),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {},
-                  icon: Icon(Icons.calendar_today),
-                  label: Text("Agenda"),
+                  icon: const Icon(Icons.calendar_today),
+                  label: const Text("Agenda"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orangeAccent,
                   ),
@@ -260,13 +248,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
-          // Linha divisória inferior
           const Divider(color: Colors.black12, thickness: 1),
-          // Cabeçalho da Seção
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
+            children: const [
+              Text(
                 'Próxima Refeição',
                 style: TextStyle(
                   fontSize: 22,
@@ -280,23 +266,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /* const Padding(
-                padding: EdgeInsets.only(top: 4.0),
-                child: Text(
-                  "00:00",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ), */
-              /* const SizedBox(width: 12), */
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF0F0F0), // Cinza claro do fundo
+                    color: const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Column(
@@ -311,8 +285,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-
-                      // Box Branco com os itens
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -330,8 +302,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // Botão Analisar outras opções
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -349,8 +319,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-
-                      // Botão Concluir refeição
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -374,8 +342,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Botão Inferior "Ver Plano Alimentar"
           InkWell(
             onTap: () {
               Navigator.push(
@@ -385,9 +351,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 ),
               );
             },
-            borderRadius: BorderRadius.circular(
-              25,
-            ), // Mantém o efeito visual dentro do raio
+            borderRadius: BorderRadius.circular(25),
             child: Container(
               width: double.infinity,
               height: 40,
@@ -443,23 +407,20 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         children: [
           const Divider(color: Colors.black12, thickness: 1),
           const SizedBox(height: 16),
-          // Título da Seção
           const Text(
             'Avaliação Física',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF916DD5), // Roxo da imagem
+              color: Color(0xFF916DD5),
             ),
           ),
           const SizedBox(height: 12),
-
-          // Card Principal
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F0F0), // Cinza claro de fundo
+              color: const Color(0xFFF0F0F0),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Row(
@@ -488,8 +449,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Conteúdo da Direita
                 Expanded(
                   flex: 1,
                   child: Column(
@@ -505,21 +464,19 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                       ),
                       Text(
                         "${_ultimaAvaliacao?.data?.toString().substring(0, 10) ?? '--'}",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       const SizedBox(height: 10),
-
                       _buildTagAvaliacao(
                         label:
                             "Percentual Gordura: ${_ultimaAvaliacao?.classPercentualGordura}%",
-                        color: const Color(0xFFFF9800), // Laranja
+                        color: const Color(0xFFFF9800),
                       ),
                       const SizedBox(height: 6),
-
                       _buildTagAvaliacao(
                         label:
                             "Massa Gorda: ${_ultimaAvaliacao?.massaGordura}%",
-                        color: const Color(0xFF4CAF50), // Verde
+                        color: const Color(0xFF4CAF50),
                       ),
                       const SizedBox(height: 10),
                     ],
@@ -529,8 +486,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             ),
           ),
           const SizedBox(height: 12),
-
-          // Botão Inferior "Ver Avaliação Completa"
           InkWell(
             onTap: () {
               Navigator.push(
@@ -574,7 +529,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     );
   }
 
-  // Widget auxiliar para as tags coloridas (Massa Magra/Gorda)
   Widget _buildTagAvaliacao({required String label, required Color color}) {
     return Container(
       width: double.infinity,
