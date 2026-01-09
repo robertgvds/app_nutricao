@@ -34,7 +34,7 @@ class _NutricionistaAntropometriaScreenState
   final _massaCorporalCtrl = TextEditingController();
   final _massaGorduraCtrl = TextEditingController();
   final _percentualGorduraCtrl = TextEditingController();
-  final _massaEsqueleticaCtrl = TextEditingController();
+  // REMOVIDO: _massaEsqueleticaCtrl
   final _imcCtrl = TextEditingController();
   final _cmbCtrl = TextEditingController();
   final _rcqCtrl = TextEditingController();
@@ -42,7 +42,7 @@ class _NutricionistaAntropometriaScreenState
   String _classMassaCorporal = 'Ideal';
   String _classMassaGordura = 'Ideal';
   String _classPercentualGordura = 'Ideal';
-  String _classMassaEsqueletica = 'Ideal';
+  // REMOVIDO: _classMassaEsqueletica
   String _classImc = 'Ideal';
   String _classCmb = 'Ideal';
   String _classRcq = 'Ideal';
@@ -93,7 +93,7 @@ class _NutricionistaAntropometriaScreenState
         break;
       case 'Gordura':
         double min = isFem ? 18.0 : 10.0;
-        double max = isFem ? 30.0 : 25.0;
+        double max = isFem ? 28.0 : 20.0; // Ajustado conforme calculadora
         if (valor < min) sugestao = 'Abaixo';
         else if (valor > max) sugestao = 'Acima';
         setState(() => _classPercentualGordura = sugestao);
@@ -104,14 +104,15 @@ class _NutricionistaAntropometriaScreenState
         setState(() => _classMassaGordura = sugestao);
         break;
       case 'RCQ':
-        double limiteAlto = isFem ? 0.85 : 0.90;
+        double limiteAlto = isFem ? 0.85 : 0.95; // Ajustado
+        double limiteBaixo = isFem ? 0.70 : 0.80; // Ajustado
         if (valor > limiteAlto) sugestao = 'Acima';
-        else if (valor < 0.70) sugestao = 'Abaixo';
+        else if (valor < limiteBaixo) sugestao = 'Abaixo';
         setState(() => _classRcq = sugestao);
         break;
       case 'CMB':
-        double min = isFem ? 20.0 : 22.0;
-        double max = isFem ? 32.0 : 35.0;
+        double min = isFem ? 20.0 : 23.0; // Ajustado
+        double max = isFem ? 29.0 : 34.0; // Ajustado
         if (valor < min) sugestao = 'Abaixo';
         else if (valor > max) sugestao = 'Acima';
         setState(() => _classCmb = sugestao);
@@ -132,14 +133,16 @@ class _NutricionistaAntropometriaScreenState
       massaCorporal: double.tryParse(_massaCorporalCtrl.text.replaceAll(',', '.')),
       massaGordura: double.tryParse(_massaGorduraCtrl.text.replaceAll(',', '.')),
       percentualGordura: double.tryParse(_percentualGorduraCtrl.text.replaceAll(',', '.')),
-      massaEsqueletica: double.tryParse(_massaEsqueleticaCtrl.text.replaceAll(',', '.')),
+      // REMOVIDO: massaEsqueletica
+      massaEsqueletica: null, 
       imc: double.tryParse(_imcCtrl.text.replaceAll(',', '.')),
       cmb: double.tryParse(_cmbCtrl.text.replaceAll(',', '.')),
       relacaoCinturaQuadril: double.tryParse(_rcqCtrl.text.replaceAll(',', '.')),
       classMassaCorporal: _classMassaCorporal,
       classMassaGordura: _classMassaGordura,
       classPercentualGordura: _classPercentualGordura,
-      classMassaEsqueletica: _classMassaEsqueletica,
+      // REMOVIDO: classMassaEsqueletica
+      classMassaEsqueletica: null,
       classImc: _classImc,
       classCmb: _classCmb,
       classRcq: _classRcq,
@@ -162,10 +165,12 @@ class _NutricionistaAntropometriaScreenState
       _idAvaliacaoEmEdicao = null;
       _dataOriginalEmEdicao = null;
       _classMassaCorporal = _classMassaGordura = _classPercentualGordura = 
-      _classMassaEsqueletica = _classImc = _classCmb = _classRcq = 'Ideal';
+      _classImc = _classCmb = _classRcq = 'Ideal'; 
+      // REMOVIDO reset da esquelética
     });
     _massaCorporalCtrl.clear(); _massaGorduraCtrl.clear();
-    _percentualGorduraCtrl.clear(); _massaEsqueleticaCtrl.clear();
+    _percentualGorduraCtrl.clear(); 
+    // REMOVIDO clear da esquelética
     _imcCtrl.clear(); _cmbCtrl.clear(); _rcqCtrl.clear(); _obsCtrl.clear();
   }
 
@@ -176,7 +181,7 @@ class _NutricionistaAntropometriaScreenState
       _classMassaCorporal = item.classMassaCorporal ?? 'Ideal';
       _classMassaGordura = item.classMassaGordura ?? 'Ideal';
       _classPercentualGordura = item.classPercentualGordura ?? 'Ideal';
-      _classMassaEsqueletica = item.classMassaEsqueletica ?? 'Ideal';
+      // REMOVIDO set da esquelética
       _classImc = item.classImc ?? 'Ideal';
       _classCmb = item.classCmb ?? 'Ideal';
       _classRcq = item.classRcq ?? 'Ideal';
@@ -184,7 +189,7 @@ class _NutricionistaAntropometriaScreenState
     _massaCorporalCtrl.text = item.massaCorporal?.toString() ?? '';
     _massaGorduraCtrl.text = item.massaGordura?.toString() ?? '';
     _percentualGorduraCtrl.text = item.percentualGordura?.toString() ?? '';
-    _massaEsqueleticaCtrl.text = item.massaEsqueletica?.toString() ?? '';
+    // REMOVIDO text da esquelética
     _imcCtrl.text = item.imc?.toString() ?? '';
     _cmbCtrl.text = item.cmb?.toString() ?? '';
     _rcqCtrl.text = item.relacaoCinturaQuadril?.toString() ?? '';
@@ -223,7 +228,7 @@ class _NutricionistaAntropometriaScreenState
                     const SizedBox(height: 15),
                     _buildInputComStatus('Massa Corporal (kg)', _massaCorporalCtrl, _classMassaCorporal, (val) => setState(() => _classMassaCorporal = val), null),
                     _buildInputComStatus('Massa de Gordura (kg)', _massaGorduraCtrl, _classMassaGordura, (val) => setState(() => _classMassaGordura = val), (v) => _calcularSugestaoAutomatica('MassaGorda', v)),
-                    _buildInputComStatus('Massa Esquelética (kg)', _massaEsqueleticaCtrl, _classMassaEsqueletica, (val) => setState(() => _classMassaEsqueletica = val), null),
+                    // REMOVIDO INPUT DE MASSA ESQUELÉTICA AQUI
                     _buildInputComStatus('Percentual Gordura (%)', _percentualGorduraCtrl, _classPercentualGordura, (val) => setState(() => _classPercentualGordura = val), (v) => _calcularSugestaoAutomatica('Gordura', v)),
                     _buildInputComStatus('IMC (kg/m²)', _imcCtrl, _classImc, (val) => setState(() => _classImc = val), (v) => _calcularSugestaoAutomatica('IMC', v)),
                     _buildInputComStatus('Relação Cintura/Quadril', _rcqCtrl, _classRcq, (val) => setState(() => _classRcq = val), (v) => _calcularSugestaoAutomatica('RCQ', v)),
@@ -358,9 +363,9 @@ class _NutricionistaAntropometriaScreenState
         content: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             _buildTabelaRow("IMC", "< 18.5", "18.5-24.9", "≥ 25.0"),
-            _buildTabelaRow("% Gordura", isFem ? "< 18%" : "< 10%", isFem ? "18-30%" : "10-25%", isFem ? "> 30%" : "> 25%"),
-            _buildTabelaRow("RCQ", "< 0.70", isFem ? "0.70-0.85" : "0.70-0.90", isFem ? "> 0.85" : "> 0.90"),
-            _buildTabelaRow("CMB", isFem ? "< 20" : "< 22", isFem ? "20-32" : "22-35", isFem ? "> 32" : "> 35"),
+            _buildTabelaRow("% Gordura", isFem ? "< 18%" : "< 10%", isFem ? "18-28%" : "10-20%", isFem ? "> 28%" : "> 20%"),
+            _buildTabelaRow("RCQ", isFem ? "< 0.70" : "< 0.80", isFem ? "0.70-0.85" : "0.80-0.95", isFem ? "> 0.85" : "> 0.95"),
+            _buildTabelaRow("CMB", isFem ? "< 20" : "< 23", isFem ? "20-29" : "23-34", isFem ? "> 29" : "> 34"),
           ]),
         ),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Fechar"))],

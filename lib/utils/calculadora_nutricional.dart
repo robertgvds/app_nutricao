@@ -43,6 +43,11 @@ class CalculadoraNutricional {
           return 'Ideal';
         }
 
+        case 'MassaGorda': 
+         if (valor < 5) return 'Abaixo';
+         if (valor > 30) return 'Acima';
+         return 'Ideal';
+
       default:
         return 'Ideal';
     }
