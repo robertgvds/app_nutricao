@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart'; // Import necessário para o update manual se precisar
-import 'package:provider/provider.dart';
-import 'package:app/services/auth_service.dart';
+import 'package:app/screens/nutricionista/nutricionista_historico_planos_screen.dart';
 import 'package:app/widgets/app_colors.dart';
-
-// Imports das suas classes e repositories
+import 'package:flutter/material.dart';
+import 'package:app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 import '../../classes/nutricionista.dart';
 import '../../database/nutricionista_repository.dart';
 import '../../database/paciente_repository.dart';
@@ -13,7 +11,7 @@ import 'nutricionista_antropometria_screen.dart';
 import '../../database/antropometria_repository.dart';
 import '../../database/plano_alimentar_repository.dart';
 import '../../classes/planoalimentar.dart';
-import 'nutricionista_historico_planos_screen.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class NutricionistaHomeScreen extends StatefulWidget {
   final String nutriId;
@@ -33,12 +31,11 @@ class NutricionistaHomeScreen extends StatefulWidget {
 class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
   final _nutriRepo = NutricionistaRepository();
   final _pacienteRepo = PacienteRepository();
-  final TextEditingController _idController = TextEditingController();
 
   Nutricionista? _nutricionista;
   List<Paciente> _meusPacientes = [];
   bool _isLoading = true;
-  bool _isLinking = false; // Controle de loading do botão vincular
+  bool _isLinking = false;
   Map<String, PlanoAlimentar?> _mapaPlanos = {};
 
   @override
@@ -53,53 +50,6 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
     super.dispose();
   }
 
-  Future<void> _carregarDados() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-
-    try {
-      final nutri = await _nutriRepo.buscarPorId(widget.nutriId);
-      final _planoRepo = PlanoAlimentarRepository();
-      final _antropometriaRepo = AntropometriaRepository();
-
-      if (nutri != null) {
-        List<Paciente> listaPacientes = [];
-        Map<String, PlanoAlimentar?> tempPlano = {};
-
-        for (String id in nutri.pacientesIds) {
-          final p = await _pacienteRepo.buscarPorId(id);
-          if (p != null) {
-            // Busca antropometria atualizada
-            p.antropometria = await _antropometriaRepo.buscarUltimaAvaliacao(
-              id,
-            );
-
-            // Busca planos atualizados
-            final planos = await _planoRepo.listarPlanos(id);
-            tempPlano[id] = planos.isNotEmpty ? planos.first : null;
-
-            listaPacientes.add(p);
-          }
-        }
-
-        if (mounted) {
-          setState(() {
-            _nutricionista = nutri;
-            _meusPacientes = listaPacientes;
-            _mapaPlanos = tempPlano;
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint("Erro ao recarregar dados: $e");
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  // --- LÓGICA DE VINCULAR PACIENTE ATUALIZADA ---
   Future<void> _vincularPaciente() async {
     final String idDigitado = _idController.text.trim();
 
@@ -176,8 +126,51 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
     }
   }
 
-  // Busca o paciente pelo ID e abre a tela de Plano Alimentar (Método de teste mantido)
+  Future<void> _carregarDados() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final nutri = await _nutriRepo.buscarPorId(widget.nutriId);
+      final _planoRepo = PlanoAlimentarRepository();
+      final _antropometriaRepo = AntropometriaRepository();
+
+      if (nutri != null) {
+        List<Paciente> listaPacientes = [];
+        Map<String, PlanoAlimentar?> tempPlano = {};
+
+        for (String id in nutri.pacientesIds) {
+          final p = await _pacienteRepo.buscarPorId(id);
+          if (p != null) {
+            p.antropometria = await _antropometriaRepo.buscarUltimaAvaliacao(
+              id,
+            );
+            final planos = await _planoRepo.listarPlanos(id);
+            tempPlano[id] = planos.isNotEmpty ? planos.first : null;
+
+            listaPacientes.add(p);
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _nutricionista = nutri;
+            _meusPacientes = listaPacientes;
+            _mapaPlanos = tempPlano; // Atualiza o mapa com os novos dados
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Erro ao recarregar dados: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // --- MÉTODO DE TESTE ---
+  // Busca o paciente pelo ID e abre a tela de Plano Alimentar
   Future<void> _abrirTestePlanoAlimentar(String pacienteId) async {
+    // Mostra loading rápido
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -187,7 +180,8 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
     try {
       final pacienteTeste = await _pacienteRepo.buscarPorId(pacienteId);
 
-      if (mounted) Navigator.pop(context); // Fecha loading
+      // Fecha o loading
+      if (mounted) Navigator.pop(context);
 
       if (pacienteTeste != null) {
         if (mounted) {
@@ -204,11 +198,14 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Paciente não encontrado.")),
+            const SnackBar(
+              content: Text("Paciente de teste não encontrado no banco."),
+            ),
           );
         }
       }
     } catch (e) {
+      // Fecha loading se der erro
       if (mounted) Navigator.pop(context);
       debugPrint("Erro teste: $e");
     }
@@ -222,6 +219,18 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.laranja,
+
+      // --- BOTÃO DE TESTE ATUALIZADO ---
+      /* floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.laranja,
+        icon: const Icon(Icons.restaurant_menu), // Ícone de comida
+        label: const Text("Testar Plano Alimentar"),
+        onPressed: () {
+          // Busca o paciente e abre a tela de DIETA
+          _abrirTestePlanoAlimentar("uGFqVcMBdNVRQzaWs0cnmlSlBmw2");
+        },
+      ), */
       appBar: AppBar(
         backgroundColor: AppColors.laranja,
         elevation: 0,
@@ -263,7 +272,6 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
                   _buildAdicionarPacienteInput(),
                   const Divider(),
 
-                  // --- SEÇÃO: AVALIAÇÕES PENDENTES ---
                   _buildSecaoTitulo(
                     "Avaliações Pendentes",
                     const Color(0xFF916DD5),
@@ -281,7 +289,6 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
 
                   const Divider(),
 
-                  // --- SEÇÃO: PLANOS PENDENTES ---
                   _buildSecaoTitulo(
                     "Planos Pendentes",
                     const Color(0xFF4CAF50),
@@ -293,24 +300,18 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
                         .map((p) => _cardPlanoPendente(p))
                   else
                     _buildMensagem(
-                      "Sem planos pendentes!",
+                      "Sem planos a pendentes!",
                       AppColors.verdeEscuro,
                     ),
 
-                  const Divider(),
+                  /*const Divider(),
 
-                  _buildSecaoTitulo(
-                    "Meus Pacientes (${_meusPacientes.length})",
+                   _buildSecaoTitulo(
+                    "-TESTE- Pacientes (${_meusPacientes.length})",
                     AppColors.laranja,
                   ),
 
-                  if (_meusPacientes.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text("Nenhum paciente vinculado ainda."),
-                    ),
-
-                  ..._meusPacientes.map((p) => _cardPacienteGeral(p)),
+                  ..._meusPacientes.map((p) => _cardPacienteGeral(p)), */
                 ],
               ),
             ),
@@ -319,6 +320,8 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
       ),
     );
   }
+
+  final TextEditingController _idController = TextEditingController();
 
   Widget _buildAdicionarPacienteInput() {
     return Padding(
@@ -474,7 +477,7 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
     ),
   );
 
-  Widget _cardPacienteGeral(Paciente paciente) {
+  /*  Widget _cardPacienteGeral(Paciente paciente) { //teste
     final temAvaliacao = paciente.antropometria != null;
 
     return Card(
@@ -504,15 +507,13 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // Usa o ID do paciente clicado
-          if (paciente.id != null) {
-            _abrirTestePlanoAlimentar(paciente.id!);
-          }
+          // Navega para o histórico ou perfil do paciente
+          _abrirTestePlanoAlimentar(paciente.id!);
         },
       ),
     );
   }
-
+ */
   Widget _cardPlanoPendente(Paciente paciente) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
@@ -554,11 +555,9 @@ class _NutricionistaHomeScreenState extends State<NutricionistaHomeScreen> {
               icon: const Icon(Icons.restaurant_menu, size: 18),
               label: const Text("Adicionar Plano Alimentar"),
               onPressed: () {
-                if (paciente.id != null) {
-                  _abrirTestePlanoAlimentar(
-                    paciente.id!,
-                  ).then((_) => _carregarDados());
-                }
+                _abrirTestePlanoAlimentar(
+                  paciente.id!,
+                ).then((_) => _carregarDados());
               },
             ),
           ),
