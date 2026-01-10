@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
-import '../../classes/antropometria.dart';
-import '../../database/antropometria_repository.dart';
 import '../../widgets/app_colors.dart';
+import 'nutricionista_nova_avaliacao.dart';
 
 class NutricionistaAntropometriaScreen extends StatefulWidget {
   final String pacienteId;
 
-  const NutricionistaAntropometriaScreen({
-    Key? key,
-    required this.pacienteId,
-  }) : super(key: key);
+  const NutricionistaAntropometriaScreen({super.key, required this.pacienteId});
 
   @override
   State<NutricionistaAntropometriaScreen> createState() =>
@@ -19,601 +16,637 @@ class NutricionistaAntropometriaScreen extends StatefulWidget {
 
 class _NutricionistaAntropometriaScreenState
     extends State<NutricionistaAntropometriaScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _repository = AntropometriaRepository();
+  final Color corAbaixo = Colors.orange;
+  final Color corIdeal = Colors.green;
+  final Color corAcima = Colors.red;
 
-  List<Antropometria> _historico = [];
-  bool _isLoading = true;
+  // Cache para o botão flutuante saber se existe ao menos uma avaliação
+  bool _existeAvaliacao = false;
 
-  String? _idAvaliacaoEmEdicao;
-  DateTime? _dataOriginalEmEdicao;
+  Future<Map<String, dynamic>> _buscarDados() async {
+    try {
+      final dbRef = FirebaseDatabase.instance.ref();
+      final userSnap = await dbRef.child('usuarios/${widget.pacienteId}').get();
 
-  final _obsCtrl = TextEditingController();
-  final _massaCorporalCtrl = TextEditingController();
-  final _massaGorduraCtrl = TextEditingController();
-  final _percentualGorduraCtrl = TextEditingController();
-  final _massaEsqueleticaCtrl = TextEditingController();
-  final _imcCtrl = TextEditingController();
-  final _cmbCtrl = TextEditingController();
-  final _rcqCtrl = TextEditingController();
+      // Pega a última para exibir na tela principal
+      final antropoSnap =
+          await dbRef
+              .child('antropometria/${widget.pacienteId}')
+              .orderByKey()
+              .limitToLast(1)
+              .get();
 
-  String _classMassaCorporal = 'Ideal';
-  String _classMassaGordura = 'Ideal';
-  String _classPercentualGordura = 'Ideal';
-  String _classMassaEsqueletica = 'Ideal';
-  String _classImc = 'Ideal';
-  String _classCmb = 'Ideal';
-  String _classRcq = 'Ideal';
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarHistorico();
-  }
-
-  Future<void> _carregarHistorico() async {
-    final lista = await _repository.buscarHistorico(widget.pacienteId);
-    lista.sort((a, b) =>
-        (b.data ?? DateTime.now()).compareTo(a.data ?? DateTime.now()));
-
-    setState(() {
-      _historico = lista;
-      _isLoading = false;
-    });
-  }
-
-  void _calcularSugestaoAutomatica(String tipo, String valorTexto) {
-    if (valorTexto.isEmpty) return;
-    double? valor = double.tryParse(valorTexto.replaceAll(',', '.'));
-    if (valor == null) return;
-
-    String sugestao = 'Ideal';
-
-    switch (tipo) {
-      case 'IMC':
-        if (valor < 18.5) sugestao = 'Abaixo';
-        else if (valor >= 25.0) sugestao = 'Acima';
-        else sugestao = 'Ideal';
-        setState(() => _classImc = sugestao);
-        break;
-
-      case 'Gordura':
-        if (valor < 10) sugestao = 'Abaixo';
-        else if (valor > 25) sugestao = 'Acima';
-        else sugestao = 'Ideal';
-        setState(() => _classPercentualGordura = sugestao);
-        break;
-
-      case 'MassaGorda':
-        if (valor < 5) sugestao = 'Abaixo';
-        else if (valor > 30) sugestao = 'Acima';
-        else sugestao = 'Ideal';
-        setState(() => _classMassaGordura = sugestao);
-        break;
-
-      case 'RCQ':
-        if (valor > 0.90) sugestao = 'Acima';
-        else if (valor < 0.70) sugestao = 'Abaixo';
-        else sugestao = 'Ideal';
-        setState(() => _classRcq = sugestao);
-        break;
-
-      case 'CMB':
-        if (valor < 22) sugestao = 'Abaixo';
-        else if (valor > 35) sugestao = 'Acima';
-        else sugestao = 'Ideal';
-        setState(() => _classCmb = sugestao);
-        break;
+      return {'usuario': userSnap.value, 'antropometria': antropoSnap.value};
+    } catch (e) {
+      debugPrint("Erro ao buscar dados: $e");
+      return {};
     }
   }
 
-  void _mostrarLegenda(BuildContext context) {
-    showDialog(
+  Color _definirCor(String? classificacao) {
+    if (classificacao == null) return Colors.grey;
+    final valor = classificacao.toLowerCase();
+    if (valor.contains('ideal')) return corIdeal;
+    if (valor.contains('abaixo')) return corAbaixo;
+    if (valor.contains('acima')) return corAcima;
+    return Colors.grey;
+  }
+
+  String _formatarData(String? isoString) {
+    if (isoString == null) return "--/--/----";
+    try {
+      final data = DateTime.parse(isoString);
+      return DateFormat('dd/MM/yyyy HH:mm').format(data);
+    } catch (e) {
+      return isoString;
+    }
+  }
+
+  // --- NAVEGAÇÃO PARA O FORMULÁRIO ---
+  void _navegarParaFormulario({Map<String, dynamic>? dadosEdicao}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => NovaAvaliacaoScreen(
+              pacienteId: widget.pacienteId,
+              dadosExistentes: dadosEdicao, // Passa dados se for edição
+            ),
+      ),
+    ).then((_) {
+      setState(() {}); // Atualiza a tela ao voltar
+    });
+  }
+
+  // --- LÓGICA: SELETOR DE AVALIAÇÃO (Serve para EDITAR ou APAGAR) ---
+  void _mostrarSeletorDeAvaliacoes({required bool isDeleteMode}) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Parâmetros de Referência",
-            style: TextStyle(
-                color: AppColors.roxo, fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                  "O sistema sugere a classificação automaticamente com base nos seguintes cortes (mas você pode alterar manualmente):",
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(height: 16),
-              _buildTabelaParametro(
-                  "IMC (kg/m²)", "< 18.5", "18.5 - 24.9", "≥ 25.0"),
-              _buildTabelaParametro(
-                  "% Gordura", "< 10%", "10% - 25%", "> 25%"),
-              _buildTabelaParametro(
-                  "Massa Gorda (kg)", "< 5", "5 - 30", "> 30"),
-              _buildTabelaParametro(
-                  "RCQ", "< 0.70", "0.70 - 0.90", "> 0.90"),
-              _buildTabelaParametro(
-                  "CMB (cm)", "< 22", "22 - 35", "> 35"),
-              const SizedBox(height: 12),
-              const Divider(),
-              const Text(
-                  "* Demais campos: Sugestão baseada em média populacional genérica.",
-                  style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic)),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child:
-                const Text("Entendi", style: TextStyle(color: AppColors.roxo)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabelaParametro(
-      String nome, String baixo, String ideal, String alto) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(nome,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: AppColors.roxo)),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              _buildBadgeLegenda("Abaixo", baixo, const Color(0xFF5E6EE6)),
-              const SizedBox(width: 8),
-              _buildBadgeLegenda("Ideal", ideal, const Color(0xFF4CAF50)),
-              const SizedBox(width: 8),
-              _buildBadgeLegenda("Acima", alto, const Color(0xFFFF7043)),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBadgeLegenda(String label, String valor, Color cor) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-            color: cor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: cor.withOpacity(0.5))),
-        child: Column(
-          children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.bold, color: cor)),
-            Text(valor,
-                style: const TextStyle(fontSize: 10, color: Colors.black87),
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _carregarParaEdicao(Antropometria item) {
-    setState(() {
-      _idAvaliacaoEmEdicao = item.id_avaliacao;
-      _dataOriginalEmEdicao = item.data;
-
-      _classMassaCorporal = item.classMassaCorporal ?? 'Ideal';
-      _classMassaGordura = item.classMassaGordura ?? 'Ideal';
-      _classPercentualGordura = item.classPercentualGordura ?? 'Ideal';
-      _classMassaEsqueletica = item.classMassaEsqueletica ?? 'Ideal';
-      _classImc = item.classImc ?? 'Ideal';
-      _classCmb = item.classCmb ?? 'Ideal';
-      _classRcq = item.classRcq ?? 'Ideal';
-    });
-
-    _massaCorporalCtrl.text = item.massaCorporal?.toString() ?? '';
-    _massaGorduraCtrl.text = item.massaGordura?.toString() ?? '';
-    _percentualGorduraCtrl.text = item.percentualGordura?.toString() ?? '';
-    _massaEsqueleticaCtrl.text = item.massaEsqueletica?.toString() ?? '';
-    _imcCtrl.text = item.imc?.toString() ?? '';
-    _cmbCtrl.text = item.cmb?.toString() ?? '';
-    _rcqCtrl.text = item.relacaoCinturaQuadril?.toString() ?? '';
-    _obsCtrl.text = item.observacoes ?? '';
-
-    Scrollable.ensureVisible(_formKey.currentContext!,
-        duration: const Duration(milliseconds: 500));
-  }
-
-  Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    DateTime dataFinal =
-        (_idAvaliacaoEmEdicao != null && _dataOriginalEmEdicao != null)
-            ? _dataOriginalEmEdicao!
-            : DateTime.now();
-
-    final novaAvaliacao = Antropometria(
-      id_avaliacao: _idAvaliacaoEmEdicao,
-      massaCorporal:
-          double.tryParse(_massaCorporalCtrl.text.replaceAll(',', '.')),
-      massaGordura:
-          double.tryParse(_massaGorduraCtrl.text.replaceAll(',', '.')),
-      percentualGordura:
-          double.tryParse(_percentualGorduraCtrl.text.replaceAll(',', '.')),
-      massaEsqueletica:
-          double.tryParse(_massaEsqueleticaCtrl.text.replaceAll(',', '.')),
-      imc: double.tryParse(_imcCtrl.text.replaceAll(',', '.')),
-      cmb: double.tryParse(_cmbCtrl.text.replaceAll(',', '.')),
-      relacaoCinturaQuadril:
-          double.tryParse(_rcqCtrl.text.replaceAll(',', '.')),
-      classMassaCorporal: _classMassaCorporal,
-      classMassaGordura: _classMassaGordura,
-      classPercentualGordura: _classPercentualGordura,
-      classMassaEsqueletica: _classMassaEsqueletica,
-      classImc: _classImc,
-      classCmb: _classCmb,
-      classRcq: _classRcq,
-      observacoes: _obsCtrl.text,
-      data: dataFinal,
-    );
-
-    await _repository.salvarAvaliacao(widget.pacienteId, novaAvaliacao);
-
-    _limparCampos();
-    await _carregarHistorico();
-
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Salvo com sucesso!'), backgroundColor: Colors.green),
-    );
-  }
-
-  void _limparCampos() {
-    setState(() {
-      _idAvaliacaoEmEdicao = null;
-      _dataOriginalEmEdicao = null;
-      _classMassaCorporal = 'Ideal';
-      _classMassaGordura = 'Ideal';
-      _classPercentualGordura = 'Ideal';
-      _classMassaEsqueletica = 'Ideal';
-      _classImc = 'Ideal';
-      _classCmb = 'Ideal';
-      _classRcq = 'Ideal';
-    });
-    _massaCorporalCtrl.clear();
-    _massaGorduraCtrl.clear();
-    _percentualGorduraCtrl.clear();
-    _massaEsqueleticaCtrl.clear();
-    _imcCtrl.clear();
-    _cmbCtrl.clear();
-    _rcqCtrl.clear();
-    _obsCtrl.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    String dataExibida = _dataOriginalEmEdicao != null
-        ? DateFormat('dd/MM/yyyy').format(_dataOriginalEmEdicao!)
-        : DateFormat('dd/MM/yyyy').format(DateTime.now());
-
-    return Scaffold(
-      backgroundColor: AppColors.roxo,
-      appBar: AppBar(
-        backgroundColor: AppColors.roxo,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Adicionar/Editar Avaliação',
-            style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : SingleChildScrollView(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (_, controller) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.all(20),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                        _idAvaliacaoEmEdicao != null
-                                            ? 'Editando'
-                                            : 'Nova Avaliação',
-                                        style: TextStyle(
-                                            color: AppColors.roxo,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16)),
-                                    Text(dataExibida,
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold)),
-                                  ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    isDeleteMode
+                        ? "Escolha qual apagar"
+                        : "Escolha qual editar",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDeleteMode ? Colors.red : AppColors.laranja,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: StreamBuilder(
+                      stream:
+                          FirebaseDatabase.instance
+                              .ref()
+                              .child('antropometria/${widget.pacienteId}')
+                              .orderByKey()
+                              .onValue,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data?.snapshot.value == null) {
+                          return const Center(
+                            child: Text("Nenhuma avaliação encontrada."),
+                          );
+                        }
+
+                        final dadosRaw = snapshot.data!.snapshot.value as Map;
+                        List<Map<String, dynamic>> listaAvaliacoes = [];
+
+                        dadosRaw.forEach((key, value) {
+                          final map = Map<String, dynamic>.from(value as Map);
+                          map['key'] = key;
+                          listaAvaliacoes.add(map);
+                        });
+
+                        // Ordenar decrescente (mais novo em cima)
+                        listaAvaliacoes.sort(
+                          (a, b) =>
+                              (b['data'] ?? '').compareTo(a['data'] ?? ''),
+                        );
+
+                        return ListView.separated(
+                          controller: controller,
+                          itemCount: listaAvaliacoes.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final item = listaAvaliacoes[index];
+                            final dataFormatada = _formatarData(item['data']);
+
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              leading: CircleAvatar(
+                                backgroundColor:
+                                    isDeleteMode
+                                        ? Colors.red.withOpacity(0.1)
+                                        : Colors.blue.withOpacity(0.1),
+                                child: Icon(
+                                  isDeleteMode
+                                      ? Icons.delete_outline
+                                      : Icons.edit,
+                                  color:
+                                      isDeleteMode ? Colors.red : Colors.blue,
+                                  size: 20,
                                 ),
-                                const SizedBox(height: 12),
-                                TextFormField(
-                                  controller: _obsCtrl,
-                                  maxLines: 2,
-                                  decoration: InputDecoration(
-                                    hintText: 'Observações...',
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none),
-                                  ),
+                              ),
+                              title: Text(
+                                "Avaliação de $dataFormatada",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Classificação dos Índices',
-                                  style: TextStyle(
-                                      color: AppColors.roxo,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
-                              IconButton(
-                                icon: const Icon(Icons.help_outline,
-                                    color: AppColors.roxo),
-                                onPressed: () => _mostrarLegenda(context),
-                                tooltip: "Ver legenda",
-                              )
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                              'Preencha o valor e a classificação será sugerida (clique para alterar):',
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 12)),
-                          const SizedBox(height: 16),
-                          _buildInputComStatus(
-                              'Massa Corporal',
-                              _massaCorporalCtrl,
-                              _classMassaCorporal,
-                              (val) =>
-                                  setState(() => _classMassaCorporal = val),
-                              null),
-                          _buildInputComStatus(
-                              'Massa de Gordura',
-                              _massaGorduraCtrl,
-                              _classMassaGordura,
-                              (val) => setState(() => _classMassaGordura = val),
-                              (val) => _calcularSugestaoAutomatica(
-                                  'MassaGorda', val)),
-                          _buildInputComStatus(
-                              'Percentual de Gordura',
-                              _percentualGorduraCtrl,
-                              _classPercentualGordura,
-                              (val) =>
-                                  setState(() => _classPercentualGordura = val),
-                              (val) =>
-                                  _calcularSugestaoAutomatica('Gordura', val)),
-                          _buildInputComStatus(
-                              'Massa Esquelética',
-                              _massaEsqueleticaCtrl,
-                              _classMassaEsqueletica,
-                              (val) =>
-                                  setState(() => _classMassaEsqueletica = val),
-                              null),
-                          _buildInputComStatus(
-                              'IMC',
-                              _imcCtrl,
-                              _classImc,
-                              (val) => setState(() => _classImc = val),
-                              (val) => _calcularSugestaoAutomatica('IMC', val)),
-                          _buildInputComStatus(
-                              'CMB',
-                              _cmbCtrl,
-                              _classCmb,
-                              (val) => setState(() => _classCmb = val),
-                              (val) => _calcularSugestaoAutomatica('CMB', val)),
-                          _buildInputComStatus(
-                              'Relação C/Q',
-                              _rcqCtrl,
-                              _classRcq,
-                              (val) => setState(() => _classRcq = val),
-                              (val) => _calcularSugestaoAutomatica('RCQ', val)),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                  onPressed: _salvar,
-                                  icon: const Icon(Icons.check,
-                                      color: Colors.white),
-                                  label: const Text('Salvar'),
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF4CAF50),
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 14)))),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    _limparCampos();
-                                    Navigator.pop(context);
-                                  },
-                                  icon: const Icon(Icons.close,
-                                      color: Colors.white),
-                                  label: const Text('Cancelar'),
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFF5722),
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 14)))),
-                          const SizedBox(height: 30),
-                          if (_historico.isNotEmpty) ...[
-                            Text('Histórico',
-                                style: TextStyle(
-                                    color: AppColors.roxo,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _historico.length,
-                              itemBuilder: (ctx, i) =>
-                                  _buildHistoricoItem(_historico[i]),
-                            )
-                          ]
-                        ],
-                      ),
+                              ),
+                              subtitle: Text(
+                                "Peso: ${item['massaCorporal']}kg | IMC: ${item['imc']}",
+                              ),
+                              trailing: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              onTap: () {
+                                Navigator.pop(ctx); // Fecha o seletor
+
+                                if (isDeleteMode) {
+                                  // Se for modo deletar, abre confirmação
+                                  _confirmarExclusao(
+                                    item['id_avaliacao'],
+                                    dataFormatada,
+                                  );
+                                } else {
+                                  // Se for modo editar, abre formulário
+                                  _navegarParaFormulario(dadosEdicao: item);
+                                }
+                              },
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ],
               ),
-            ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildInputComStatus(
-      String label,
-      TextEditingController ctrl,
-      String statusAtual,
-      Function(String) onStatusChanged,
-      Function(String)? onChangedInput) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                  child: Text(label,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13))),
-              SizedBox(
-                width: 80,
-                height: 35,
-                child: TextFormField(
-                  controller: ctrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.center,
-                  onChanged: (val) {
-                    if (onChangedInput != null) onChangedInput(val);
-                  },
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.only(bottom: 10),
-                    hintText: '0.0',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+  // --- LÓGICA: APAGAR AVALIAÇÃO ---
+  Future<void> _deletarAvaliacao(String idAvaliacao) async {
+    try {
+      await FirebaseDatabase.instance
+          .ref()
+          .child('antropometria/${widget.pacienteId}/$idAvaliacao')
+          .remove();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Avaliação apagada!")));
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Erro: $e")));
+    }
+  }
+
+  void _confirmarExclusao(String idAvaliacao, String dataFormatada) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text("Apagar Avaliação"),
+            content: Text(
+              "Tem certeza que deseja apagar permanentemente a avaliação de $dataFormatada?",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Cancelar"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // Fecha o diálogo
+                  _deletarAvaliacao(idAvaliacao); // Executa a exclusão
+                },
+                child: const Text(
+                  "Apagar",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    );
+  }
+
+  // --- MENU PRINCIPAL (BOTTOM SHEET) ---
+  void _mostrarOpcoes() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildChoiceChip('Abaixo', const Color(0xFF5E6EE6), statusAtual,
-                  onStatusChanged),
-              _buildChoiceChip('Ideal', const Color(0xFF4CAF50), statusAtual,
-                  onStatusChanged),
-              _buildChoiceChip('Acima', const Color(0xFFFF7043), statusAtual,
-                  onStatusChanged),
+              ListTile(
+                leading: const Icon(Icons.history, color: Colors.blue),
+                title: const Text("Atualizar avaliação antiga"),
+                subtitle: const Text(
+                  "Escolha uma avaliação da lista para editar",
+                ),
+                enabled: _existeAvaliacao,
+                onTap: () {
+                  Navigator.pop(context);
+                  _mostrarSeletorDeAvaliacoes(
+                    isDeleteMode: false,
+                  ); // Modo EDIÇÃO
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.add_circle, color: Colors.green),
+                title: const Text("Criar nova avaliação"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _navegarParaFormulario(dadosEdicao: null); // Null = Criar
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  "Apagar avaliação", // Texto atualizado
+                  style: TextStyle(color: Colors.red),
+                ),
+                subtitle: const Text("Escolha uma avaliação para remover"),
+                enabled: _existeAvaliacao,
+                onTap: () {
+                  Navigator.pop(context);
+                  _mostrarSeletorDeAvaliacoes(
+                    isDeleteMode: true,
+                  ); // Modo EXCLUSÃO
+                },
+              ),
             ],
-          )
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primaryColor = AppColors.laranja;
+
+    return Scaffold(
+      backgroundColor: primaryColor,
+      appBar: AppBar(
+        title: const Text(
+          "Última Avaliação",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: primaryColor,
+        centerTitle: true,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _mostrarOpcoes,
+        backgroundColor: primaryColor,
+        child: const Icon(Icons.menu, color: Colors.white),
+      ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _buscarDados(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          }
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                "Erro ao carregar.",
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          }
+
+          final dadosGerais = snapshot.data;
+
+          // Processamento dos dados
+          String nome = "Paciente";
+          if (dadosGerais?['usuario'] != null) {
+            nome = (dadosGerais!['usuario'] as Map)['nome'] ?? "Paciente";
+          }
+
+          Map<String, dynamic>? avaliacao;
+          if (dadosGerais?['antropometria'] != null) {
+            final mapAntropo = Map<String, dynamic>.from(
+              dadosGerais!['antropometria'] as Map,
+            );
+            if (mapAntropo.isNotEmpty) {
+              avaliacao = Map<String, dynamic>.from(
+                mapAntropo.values.first as Map,
+              );
+              _existeAvaliacao = true;
+            } else {
+              _existeAvaliacao = false;
+            }
+          } else {
+            _existeAvaliacao = false;
+          }
+
+          return CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 24,
+                  ),
+                  child: Column(
+                    children: [
+                      if (avaliacao == null)
+                        _buildEmptyState(nome)
+                      else
+                        _buildContent(nome, avaliacao, primaryColor),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // --- MÉTODOS DE UI ---
+  Widget _buildEmptyState(String nome) {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Paciente: $nome",
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          const Icon(Icons.note_alt_outlined, size: 60, color: Colors.grey),
+          const SizedBox(height: 10),
+          const Text(
+            "Nenhuma avaliação registrada.",
+            style: TextStyle(color: Colors.grey),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildChoiceChip(String label, Color color, String currentSelection,
-      Function(String) onSelect) {
-    bool isSelected = currentSelection == label;
-    return GestureDetector(
-      onTap: () => onSelect(label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? color : Colors.grey[300]!),
+  Widget _buildContent(
+    String nome,
+    Map<String, dynamic> avaliacao,
+    Color primaryColor,
+  ) {
+    final dataExame = _formatarData(avaliacao['data']);
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: primaryColor.withOpacity(0.1),
+                child: Text(
+                  nome.isNotEmpty ? nome[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nome,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Data: $dataExame",
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey,
-              fontSize: 11,
-              fontWeight: FontWeight.bold),
+        const SizedBox(height: 25),
+        _legendaContainer(),
+        const SizedBox(height: 25),
+        Row(
+          children: [
+            Icon(Icons.bar_chart, color: primaryColor, size: 22),
+            const SizedBox(width: 8),
+            const Text(
+              "Resultados",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
+        const SizedBox(height: 15),
+        _itemDado(
+          "Massa Corporal",
+          avaliacao['massaCorporal'],
+          "kg",
+          avaliacao['classMassaCorporal'],
+        ),
+        _itemDado(
+          "Massa Gordura",
+          avaliacao['massaGordura'],
+          "kg",
+          avaliacao['classMassaGordura'],
+        ),
+        _itemDado(
+          "% de Gordura",
+          avaliacao['percentualGordura'],
+          "%",
+          avaliacao['classPercentualGordura'],
+        ),
+        _itemDado(
+          "Massa Esquelética",
+          avaliacao['massaEsqueletica'],
+          "kg",
+          avaliacao['classMassaEsqueletica'],
+        ),
+        _itemDado("IMC", avaliacao['imc'], "", avaliacao['classImc']),
+        _itemDado("CMB", avaliacao['cmb'], "cm", avaliacao['classCmb']),
+        _itemDado(
+          "RCQ",
+          avaliacao['relacaoCinturaQuadril'],
+          "",
+          avaliacao['classRcq'],
+        ),
+      ],
+    );
+  }
+
+  Widget _legendaContainer() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _legenda("Abaixo", corAbaixo),
+          _legenda("Ideal", corIdeal),
+          _legenda("Acima", corAcima),
+        ],
       ),
     );
   }
 
-  Widget _buildHistoricoItem(Antropometria item) {
+  Widget _legenda(String texto, Color cor) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: cor, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(texto, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _itemDado(
+    String label,
+    dynamic valor,
+    String unidade,
+    dynamic classificacao,
+  ) {
+    final String valTexto = valor?.toString() ?? "-";
+    final Color corStatus = _definirCor(classificacao?.toString());
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(12)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(DateFormat('dd/MM/yyyy').format(item.data!),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(
-                'Peso: ${item.massaCorporal ?? '-'} | Gordura: ${item.percentualGordura ?? '-'}%',
-                style: const TextStyle(fontSize: 12))
-          ]),
-          ElevatedButton(
-            onPressed: () => _carregarParaEdicao(item),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.roxo,
-                minimumSize: const Size(60, 30)),
-            child: const Text('Editar',
-                style: TextStyle(color: Colors.white, fontSize: 10)),
-          )
+          Text(
+            label,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+          Row(
+            children: [
+              Text(
+                "$valTexto $unidade",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: corStatus,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
