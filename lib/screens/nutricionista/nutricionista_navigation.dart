@@ -6,15 +6,17 @@ import 'nutricionista_home_screen.dart';
 import './nutricionista_listapacientes_screen.dart';
 
 class NutricionistaNavigation extends StatefulWidget {
-  final int currentPageIndex; 
+  final int currentPageIndex;
 
   const NutricionistaNavigation({super.key, this.currentPageIndex = 0});
 
   @override
-  State<NutricionistaNavigation> createState() => _NutricionistaNavigationState();
+  State<NutricionistaNavigation> createState() =>
+      _NutricionistaNavigationState();
 }
 
-class _NutricionistaNavigationState extends State<NutricionistaNavigation> {late int _currentIndex;
+class _NutricionistaNavigationState extends State<NutricionistaNavigation> {
+  late int _currentIndex;
   @override
   void initState() {
     super.initState();
@@ -44,8 +46,11 @@ class _NutricionistaNavigationState extends State<NutricionistaNavigation> {late
 
     // 2. Cria a lista de telas passando o ID correto (String)
     final List<Widget> screens = [
-      NutricionistaHomeScreen(nutriId: uidUsuario, onMudarAba: _navegarPara), // Index 0
-      const NutricionistaListaPacientesScreen(),                              // Index 1
+      NutricionistaHomeScreen(
+        nutriId: uidUsuario,
+        onMudarAba: _navegarPara,
+      ), // Index 0
+      const NutricionistaListaPacientesScreen(), // Index 1
     ];
 
     return Scaffold(
